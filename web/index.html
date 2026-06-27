@@ -449,7 +449,7 @@ function runBehavior(e,p,d,spd,dt){
 
 // ---------- Abilities (skillshots) ----------
 const aim={slot:-1,id:null,cx:0,cy:0,dx:0,dy:0,has:false};
-const AIMMAX=85;
+const AIMMAX=85, BASIC=99;   // BASIC is an aim "slot" sentinel for the manual basic attack
 function aimWorld(){const p=G.player;
   if(aim.has){const dir=screenDirToWorld(aim.dx,aim.dy);const frac=clamp(Math.hypot(aim.dx,aim.dy)/AIMMAX,0,1);return{dir,frac};}
   const tgt=nearest(p.x,p.y,1200);
@@ -470,14 +470,16 @@ function castSkill(slot){
       G.meteors.push({x:tx+Math.cos(a)*rr,y:ty+Math.sin(a)*rr,delay:i*(5/14)+rand(0,0.12),r:90,dmg:42*aMul(p),fired:false,flash:0});}}
   ab.cd=abCd(p,slot);
 }
-function tryBasic(force){
-  const p=G.player;if(p.attackCd>0)return;
-  const tgt=nearest(p.x,p.y,p.attackRange);if(!tgt&&!force)return;
-  let dir=p.facing;
-  if(tgt){const dx=tgt.x-p.x,dy=tgt.y-p.y,m=Math.hypot(dx,dy)||1;dir={x:dx/m,y:dy/m};p.facing=dir;p.face=(w2s(p.x+dir.x,p.y)[0]>=w2s(p.x,p.y)[0])?1:-1;}
+// Manual basic attack. If `dir` is given (button was dragged) fire that way;
+// otherwise auto-aim the nearest enemy, falling back to the facing direction.
+function fireBasic(dir){
+  const p=G.player;if(p.attackCd>0||G.state!==St.Play)return;
+  if(!dir){const tgt=nearest(p.x,p.y,Math.max(p.attackRange,1400));
+    if(tgt){const dx=tgt.x-p.x,dy=tgt.y-p.y,m=Math.hypot(dx,dy)||1;dir={x:dx/m,y:dy/m};}else dir=p.facing;}
+  p.facing=dir;p.face=(w2s(p.x+dir.x,p.y+dir.y)[0]>=w2s(p.x,p.y)[0])?1:-1;
   const n=p.projectiles,base=Math.atan2(dir.y,dir.x),spread=0.16;
   for(let i=0;i<n;i++){const a=base+(i-(n-1)/2)*spread;spawnProj(p.x,p.y,{x:Math.cos(a),y:Math.sin(a)},p.projSpeed,basicDmg(p),p.pierce,{r:6,life:1.1,color:'#7ec8ff',sprite:'fx_p13'});}
-  p.attackCd=basicInt(p);
+  p.attackCd=basicInt(p);sfx('hit');
 }
 
 // ---------- XP / Level ----------
@@ -544,14 +546,21 @@ function bindSkill(id,slot){const el=$(id);
     const dx=e.clientX-aim.cx,dy=e.clientY-aim.cy;if(Math.hypot(dx,dy)>16){aim.dx=dx;aim.dy=dy;aim.has=true;}});
   const up=()=>{el.classList.remove('pressed');if(aim.slot===slot){castSkill(slot);aim.slot=-1;aim.id=null;aim.has=false;}};
   el.addEventListener('pointerup',up);el.addEventListener('pointercancel',up);}
-function bindBasic(id){const el=$(id);
-  el.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();el.classList.add('pressed');tryBasic(true);});
-  const up=()=>el.classList.remove('pressed');el.addEventListener('pointerup',up);el.addEventListener('pointercancel',up);}
-bindBasic('btnBasic');bindSkill('btn1',0);bindSkill('btn2',1);bindSkill('btn3',2);bindSkill('btnUlt',3);
+function bindBasicAim(id){const el=$(id);
+  el.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();el.classList.add('pressed');if(G.state!==St.Play)return;
+    const r=el.getBoundingClientRect();aim.slot=BASIC;aim.id=e.pointerId;aim.cx=r.left+r.width/2;aim.cy=r.top+r.height/2;aim.dx=aim.dy=0;aim.has=false;
+    try{el.setPointerCapture(e.pointerId);}catch(_){}});
+  el.addEventListener('pointermove',e=>{if(aim.slot!==BASIC||e.pointerId!==aim.id)return;
+    const dx=e.clientX-aim.cx,dy=e.clientY-aim.cy;if(Math.hypot(dx,dy)>16){aim.dx=dx;aim.dy=dy;aim.has=true;}});
+  const up=()=>{el.classList.remove('pressed');
+    if(aim.slot===BASIC){fireBasic(aim.has?screenDirToWorld(aim.dx,aim.dy):null);aim.slot=-1;aim.id=null;aim.has=false;}};
+  el.addEventListener('pointerup',up);el.addEventListener('pointercancel',up);}
+bindBasicAim('btnBasic');bindSkill('btn1',0);bindSkill('btn2',1);bindSkill('btn3',2);bindSkill('btnUlt',3);
 
 const keys={};
 addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;
-  if(e.key==='1')castSkill(0);if(e.key==='2')castSkill(1);if(e.key==='3')castSkill(2);if(e.key.toLowerCase()==='r')castSkill(3);});
+  if(e.key==='1')castSkill(0);if(e.key==='2')castSkill(1);if(e.key==='3')castSkill(2);if(e.key.toLowerCase()==='r')castSkill(3);
+  if(e.key===' '||e.key.toLowerCase()==='q')fireBasic(null);});
 addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false;});
 addEventListener('pointerdown',ensureAudio,{once:true});
 
@@ -639,7 +648,6 @@ function update(dt){
 
   if(p.attackCd>0)p.attackCd-=dt;if(p.iframe>0)p.iframe-=dt;
   for(const ab of p.abil)if(ab.cd>0)ab.cd-=dt;
-  tryBasic(false);
 
   for(const e of G.enemies){if(e.dead)continue;
     let spd=e.spd*UNIT_SPEED;if(e.slowT>0){e.slowT-=dt;spd*=(1-e.slowF);}if(e.flash>0)e.flash-=dt;
@@ -743,7 +751,15 @@ function drawPlayer(){
 }
 function drawAim(){
   if(aim.slot<0||G.state!==St.Play)return;
-  const p=G.player,ab=p.abil[aim.slot];
+  const p=G.player;
+  if(aim.slot===BASIC){
+    if(!aim.has)return;
+    const dir=screenDirToWorld(aim.dx,aim.dy),len=p.attackRange,a=w2s(p.x,p.y),b=w2s(p.x+dir.x*len,p.y+dir.y*len);
+    ctx.strokeStyle='rgba(126,200,255,0.85)';ctx.lineWidth=5;ctx.lineCap='round';
+    ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();
+    ctx.fillStyle=ctx.strokeStyle;ctx.beginPath();ctx.arc(b[0],b[1],6,0,Math.PI*2);ctx.fill();return;
+  }
+  const ab=p.abil[aim.slot];
   const dir=aim.has?screenDirToWorld(aim.dx,aim.dy):p.facing;
   const frac=aim.has?clamp(Math.hypot(aim.dx,aim.dy)/AIMMAX,0,1):0.6;
   if(ab.k==='beam'||ab.k==='dash'){const len=ab.range,a=w2s(p.x,p.y),b=w2s(p.x+dir.x*len,p.y+dir.y*len);
