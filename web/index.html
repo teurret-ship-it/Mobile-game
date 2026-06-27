@@ -255,7 +255,7 @@ function loadSprite(id,ver){spritesTotal++;const im=new Image();
   im.onload=()=>{spritesLoaded++;if(spritesLoaded>=spritesTotal)onAssetsReady();};
   im.onerror=()=>{spritesLoaded++;if(spritesLoaded>=spritesTotal)onAssetsReady();};
   im.src=`assets/monsters/${id}.png`+(ver?`?v=${ver}`:'');SPRITES[id]=im;}
-for(let i=1;i<=21;i++) loadSprite('m'+String(i).padStart(2,'0'));
+for(let i=1;i<=24;i++) loadSprite('n'+String(i).padStart(2,'0'));
 loadSprite('hero','3');
 function loadImg(key,url){spritesTotal++;const im=new Image();
   im.onload=()=>{spritesLoaded++;if(spritesLoaded>=spritesTotal)onAssetsReady();};
@@ -277,27 +277,27 @@ function buildGrass(){const T=GRASS.tile,c=document.createElement('canvas');c.wi
 //  puddle (leaves hazard trail), summoner, teleporter, boss. `ba.split`/`ba.nova` add
 //  on-death effects.
 const MTYPES={
-  wolf:{s:'m06',hp:14,dmg:5,spd:175,r:16,xp:1,h:60,name:'Wolf'},
-  spider:{s:'m07',hp:16,dmg:5,spd:135,r:16,xp:1,h:58,name:'Spider',b:'puddle',ba:{every:1.7,r:58,dmg:3,dur:3.5,slow:0.45,color:'rgba(220,225,255,0.16)'}},
-  goblin:{s:'m16',hp:18,dmg:6,spd:135,r:15,xp:1,h:62,name:'Goblin'},
-  harpy:{s:'m09',hp:14,dmg:5,spd:158,r:15,xp:1,h:64,name:'Harpy'},
-  plant:{s:'m12',hp:24,dmg:5,spd:60,r:15,xp:2,h:60,name:'Pixie',b:'shooter',ba:{range:430,cd:1.8,burst:1,pdmg:6,pspeed:300,color:'#9be36b',sprite:'fx_p14'}},
-  orc:{s:'m02',hp:40,dmg:9,spd:95,r:18,xp:2,h:74,name:'Orc',b:'charger',ba:{range:360,cd:3.4,wind:0.5,dur:0.4,speed:560}},
-  zombie:{s:'m11',hp:34,dmg:7,spd:78,r:18,xp:2,h:74,name:'Zombie'},
-  slime:{s:'m08',hp:46,dmg:6,spd:72,r:20,xp:2,h:62,name:'Slime',ba:{split:3}},
-  mushroom:{s:'m19',hp:36,dmg:7,spd:84,r:17,xp:2,h:70,name:'Mushroom',b:'puddle',ba:{every:2.2,r:72,dmg:5,dur:3,slow:0,color:'rgba(150,230,90,0.18)',nova:{r:95,dmg:9}}},
-  mummy:{s:'m20',hp:44,dmg:8,spd:74,r:17,xp:3,h:74,name:'Mummy',b:'summoner',ba:{cd:6,key:'goblin',n:2}},
-  fire:{s:'m10',hp:30,dmg:9,spd:100,r:16,xp:3,h:72,name:'Fire Elemental',b:'puddle',ba:{every:0.9,r:54,dmg:6,dur:2.4,slow:0,color:'rgba(255,140,40,0.22)'}},
-  owlbear:{s:'m04',hp:78,dmg:11,spd:92,r:22,xp:4,h:78,name:'Owlbear',b:'charger',ba:{range:420,cd:3.1,wind:0.45,dur:0.45,speed:620}},
-  minotaur:{s:'m13',hp:98,dmg:14,spd:80,r:24,xp:5,h:84,name:'Minotaur',b:'charger',ba:{range:520,cd:3.8,wind:0.7,dur:0.6,speed:690}},
-  stone:{s:'m03',hp:135,dmg:12,spd:55,r:26,xp:6,h:90,name:'Stone Golem'},
-  clay:{s:'m17',hp:118,dmg:12,spd:58,r:26,xp:6,h:88,name:'Clay Golem'},
-  ice:{s:'m15',hp:145,dmg:13,spd:52,r:27,xp:7,h:90,name:'Ice Golem',b:'puddle',ba:{every:1.5,r:68,dmg:4,dur:4,slow:0.5,color:'rgba(120,200,255,0.20)'}},
-  wraith:{s:'m14',hp:55,dmg:10,spd:120,r:18,xp:4,h:80,name:'Wraith',b:'teleporter',ba:{cd:3,dist:320}},
-  beholder:{s:'m05',hp:88,dmg:11,spd:66,r:20,xp:6,h:74,name:'Beholder',b:'shooter',ba:{range:520,cd:2.0,burst:3,spread:0.25,pdmg:7,pspeed:280,color:'#c86bff',sprite:'fx_p05'}},
-  demon:{s:'m18',hp:165,dmg:15,spd:92,r:24,xp:8,h:90,name:'Demon',b:'lobber',ba:{range:560,cd:2.5,r:82,dmg:15}},
-  octopus:{s:'m21',hp:155,dmg:14,spd:66,r:24,xp:8,h:80,name:'Kraken',b:'shooter',ba:{range:480,cd:2.2,burst:5,spread:0.5,pdmg:6,pspeed:240,color:'#8a5bd0',sprite:'fx_p20'}},
-  dragon:{s:'m01',hp:2400,dmg:22,spd:72,r:46,xp:120,h:172,name:'Ancient Dragon',boss:true,b:'boss'},
+  wolf:{s:'n14',hp:14,dmg:5,spd:175,r:16,xp:1,h:60,name:'Wolf'},
+  spider:{s:'n09',hp:16,dmg:5,spd:135,r:16,xp:1,h:58,name:'Spider',b:'puddle',ba:{every:1.7,r:58,dmg:3,dur:3.5,slow:0.45,color:'rgba(220,225,255,0.16)'}},
+  goblin:{s:'n12',hp:18,dmg:6,spd:135,r:15,xp:1,h:62,name:'Goblin'},
+  harpy:{s:'n19',hp:14,dmg:5,spd:158,r:15,xp:1,h:64,name:'Harpy'},
+  plant:{s:'n10',hp:24,dmg:5,spd:60,r:15,xp:2,h:60,name:'Pixie',b:'shooter',ba:{range:430,cd:1.8,burst:1,pdmg:6,pspeed:300,color:'#9be36b',sprite:'fx_p14'}},
+  orc:{s:'n07',hp:40,dmg:9,spd:95,r:18,xp:2,h:74,name:'Orc',b:'charger',ba:{range:360,cd:3.4,wind:0.5,dur:0.4,speed:560}},
+  zombie:{s:'n23',hp:34,dmg:7,spd:78,r:18,xp:2,h:74,name:'Zombie'},
+  slime:{s:'n02',hp:46,dmg:6,spd:72,r:20,xp:2,h:62,name:'Slime',ba:{split:3}},
+  mushroom:{s:'n20',hp:36,dmg:7,spd:84,r:17,xp:2,h:70,name:'Mushroom',b:'puddle',ba:{every:2.2,r:72,dmg:5,dur:3,slow:0,color:'rgba(150,230,90,0.18)',nova:{r:95,dmg:9}}},
+  mummy:{s:'n05',hp:44,dmg:8,spd:74,r:17,xp:3,h:74,name:'Mummy',b:'summoner',ba:{cd:6,key:'goblin',n:2}},
+  fire:{s:'n24',hp:30,dmg:9,spd:100,r:16,xp:3,h:72,name:'Fire Elemental',b:'puddle',ba:{every:0.9,r:54,dmg:6,dur:2.4,slow:0,color:'rgba(255,140,40,0.22)'}},
+  owlbear:{s:'n06',hp:78,dmg:11,spd:92,r:22,xp:4,h:78,name:'Owlbear',b:'charger',ba:{range:420,cd:3.1,wind:0.45,dur:0.45,speed:620}},
+  minotaur:{s:'n21',hp:98,dmg:14,spd:80,r:24,xp:5,h:84,name:'Minotaur',b:'charger',ba:{range:520,cd:3.8,wind:0.7,dur:0.6,speed:690}},
+  stone:{s:'n17',hp:135,dmg:12,spd:55,r:26,xp:6,h:90,name:'Stone Golem'},
+  clay:{s:'n01',hp:118,dmg:12,spd:58,r:26,xp:6,h:88,name:'Clay Golem'},
+  ice:{s:'n13',hp:145,dmg:13,spd:52,r:27,xp:7,h:90,name:'Ice Golem',b:'puddle',ba:{every:1.5,r:68,dmg:4,dur:4,slow:0.5,color:'rgba(120,200,255,0.20)'}},
+  wraith:{s:'n08',hp:55,dmg:10,spd:120,r:18,xp:4,h:80,name:'Wraith',b:'teleporter',ba:{cd:3,dist:320}},
+  beholder:{s:'n16',hp:88,dmg:11,spd:66,r:20,xp:6,h:74,name:'Beholder',b:'shooter',ba:{range:520,cd:2.0,burst:3,spread:0.25,pdmg:7,pspeed:280,color:'#c86bff',sprite:'fx_p05'}},
+  demon:{s:'n11',hp:165,dmg:15,spd:92,r:24,xp:8,h:90,name:'Demon',b:'lobber',ba:{range:560,cd:2.5,r:82,dmg:15}},
+  octopus:{s:'n22',hp:155,dmg:14,spd:66,r:24,xp:8,h:80,name:'Kraken',b:'shooter',ba:{range:480,cd:2.2,burst:5,spread:0.5,pdmg:6,pspeed:240,color:'#8a5bd0',sprite:'fx_p20'}},
+  dragon:{s:'n03',hp:2400,dmg:22,spd:72,r:46,xp:120,h:172,name:'Ancient Dragon',boss:true,b:'boss'},
 };
 const ELITE_POOL=['orc','zombie','owlbear','minotaur','wraith','beholder','demon','fire'];
 const WAVES=[
