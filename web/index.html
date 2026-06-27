@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="en">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
@@ -116,8 +116,8 @@
   <div id="banner"></div>
   <div id="bossWrap"><div id="bossName">Boss</div><div class="bar" id="bossBar"><div class="fill"></div></div></div>
   <div id="build">
-    <div class="bbtn" id="bTurret">🗼 Wieża <b id="cTurret">40</b></div>
-    <div class="bbtn" id="bBarricade">🧱 Mur <b id="cBarricade">18</b></div>
+    <div class="bbtn" id="bTurret">🗼 Tower <b id="cTurret">40</b></div>
+    <div class="bbtn" id="bBarricade">🧱 Wall <b id="cBarricade">18</b></div>
   </div>
 </div>
 
@@ -131,38 +131,38 @@
 
 <div class="overlay" id="startOverlay">
   <h1>Arcane Survivors</h1>
-  <p id="startSub">Ładowanie…</p>
+  <p id="startSub">Loading…</p>
   <div id="menuStats"></div>
   <div class="row">
-    <button class="btn" id="startBtn" style="display:none">Graj</button>
-    <button class="btn gold" id="forgeBtn" style="display:none">🔨 Kuźnia</button>
+    <button class="btn" id="startBtn" style="display:none">Play</button>
+    <button class="btn gold" id="forgeBtn" style="display:none">🔨 Forge</button>
   </div>
-  <div id="startHint">Lewa połowa = ruch. Czary (1/2/3/R): przytrzymaj i przeciągnij, by wycelować. A — atak (tap = najbliższy, przeciągnij = celuj). Zbieraj 🪙 złoto: wydawaj w grze na 🗼 wieże i 🧱 mury obronne, albo zachowaj na trwałe ulepszenia w Kuźni. Łańcuch zabójstw = mnożnik nagród.</div>
+  <div id="startHint">Left half of the screen = move. Spells: hold a button and drag to aim, release to cast; a quick tap auto-aims. A = basic attack (tap = nearest, drag = aim). Collect 🪙 gold: spend it in-run on 🗼 towers and 🧱 walls, or save it for permanent upgrades in the Forge. Kill streaks boost your rewards.</div>
 </div>
 
 <div class="overlay" id="levelOverlay">
-  <h1>Level Up!</h1><p>Wybierz ulepszenie</p><div id="cards"></div>
+  <h1>Level Up!</h1><p>Choose an upgrade</p><div id="cards"></div>
 </div>
 
 <div class="overlay" id="forgeOverlay">
-  <h1>🔨 Kuźnia</h1>
+  <h1>🔨 Forge</h1>
   <p id="forgeGold">🪙 0</p>
   <div id="forgeGrid"></div>
-  <button class="btn ghost" id="forgeClose" style="margin-top:16px">Zamknij</button>
+  <button class="btn ghost" id="forgeClose" style="margin-top:16px">Close</button>
 </div>
 
 <div class="overlay" id="endOverlay">
   <h1 id="endTitle">Koniec</h1><p id="endText"></p>
   <div class="row">
-    <button class="btn" id="restartBtn">Zagraj ponownie</button>
-    <button class="btn gold" id="endForgeBtn">🔨 Kuźnia</button>
+    <button class="btn" id="restartBtn">Play again</button>
+    <button class="btn gold" id="endForgeBtn">🔨 Forge</button>
   </div>
 </div>
 
 <div id="rotate">
   <div class="ic">📱</div>
-  <p>Obróć telefon poziomo</p>
-  <button class="btn" id="fsBtn" style="margin-top:18px">Pełny ekran</button>
+  <p>Rotate your phone to landscape</p>
+  <button class="btn" id="fsBtn" style="margin-top:18px">Fullscreen</button>
 </div>
 
 <script>
@@ -191,8 +191,8 @@ const DASH_DUR=0.16, HERO_H=112, UNIT_SPEED=1.5;
 const HERO_CX=0.547;                        // hero sprite horizontal centroid -> keeps the figure dead-centre
 const ENEMY_SEP=460;                       // anti-overlap separation strength (0 = stacking allowed)
 const STRUCT={
-  turret:{name:'Wieżyczka',ico:'🗼',cost:c=>40+c*25,hp:60,r:17,range:440,fireCd:0.9,dmg:14,max:10,color:'#7ec8ff'},
-  barricade:{name:'Barykada',ico:'🧱',cost:c=>18+c*12,hp:170,r:20,max:14,color:'#c79a5a'},
+  turret:{name:'Turret',ico:'🗼',cost:c=>40+c*25,hp:60,r:17,range:440,fireCd:0.9,dmg:14,max:10,color:'#7ec8ff'},
+  barricade:{name:'Barricade',ico:'🧱',cost:c=>18+c*12,hp:170,r:20,max:14,color:'#c79a5a'},
 };
 const RT={x:Math.SQRT1_2,y:-Math.SQRT1_2}, DN={x:Math.SQRT1_2,y:Math.SQRT1_2};
 const CAM={x:0,y:0};
@@ -202,15 +202,15 @@ function screenDirToWorld(sx,sy){let x=RT.x*sx+DN.x*sy,y=RT.y*sx+DN.y*sy;const m
 // ---------- Meta progression (localStorage) ----------
 const SAVE_KEY='arcane_meta_v1';
 const META_DEFS=[
-  {id:'hp',    name:'Żywotność',    desc:'+20 maks. życia',     max:8, cost:l=>40+l*35,  val:l=>l*20},
-  {id:'dmg',   name:'Potęga',       desc:'+8% obrażeń',         max:8, cost:l=>50+l*45,  val:l=>l*0.08},
-  {id:'spd',   name:'Zwinność',     desc:'+5% szybkości ruchu', max:6, cost:l=>45+l*40,  val:l=>l*0.05},
-  {id:'crit',  name:'Precyzja',     desc:'+4% szansy na kryt.', max:8, cost:l=>50+l*50,  val:l=>l*0.04},
-  {id:'magnet',name:'Magnetyzm',    desc:'+20% zasięgu zbierania',max:6,cost:l=>35+l*30, val:l=>l*0.20},
-  {id:'xp',    name:'Mądrość',      desc:'+6% zdobywanego XP',  max:6, cost:l=>50+l*45,  val:l=>l*0.06},
-  {id:'greed', name:'Chciwość',     desc:'+8% zdobywanego złota',max:6,cost:l=>50+l*45,  val:l=>l*0.08},
-  {id:'start', name:'Doświadczenie',desc:'Start z +1 wyborem ulepszenia',max:5,cost:l=>90+l*80,val:l=>l},
-  {id:'revive',name:'Feniks',       desc:'+1 wskrzeszenie na bieg',max:2,cost:l=>350+l*450,val:l=>l},
+  {id:'hp',    name:'Vitality',    desc:'+20 max health',     max:8, cost:l=>40+l*35,  val:l=>l*20},
+  {id:'dmg',   name:'Power',       desc:'+8% damage',         max:8, cost:l=>50+l*45,  val:l=>l*0.08},
+  {id:'spd',   name:'Agility',     desc:'+5% move speed', max:6, cost:l=>45+l*40,  val:l=>l*0.05},
+  {id:'crit',  name:'Precision',   desc:'+4% crit chance', max:8, cost:l=>50+l*50,  val:l=>l*0.04},
+  {id:'magnet',name:'Magnetism',   desc:'+20% pickup range',max:6,cost:l=>35+l*30, val:l=>l*0.20},
+  {id:'xp',    name:'Wisdom',      desc:'+6% XP gained',  max:6, cost:l=>50+l*45,  val:l=>l*0.06},
+  {id:'greed', name:'Greed',       desc:'+8% gold gained',max:6,cost:l=>50+l*45,  val:l=>l*0.08},
+  {id:'start', name:'Experience',  desc:'Start with +1 upgrade pick',max:5,cost:l=>90+l*80,val:l=>l},
+  {id:'revive',name:'Phoenix',     desc:'+1 revive per run',max:2,cost:l=>350+l*450,val:l=>l},
 ];
 let META={gold:0,best:0,muted:false,lv:{}};
 function loadMeta(){try{const s=JSON.parse(localStorage.getItem(SAVE_KEY));if(s){META.gold=s.gold||0;META.best=s.best||0;META.muted=!!s.muted;META.lv=s.lv||{};}}catch(_){}}
@@ -276,27 +276,27 @@ function buildGrass(){const T=GRASS.tile,c=document.createElement('canvas');c.wi
 //  puddle (leaves hazard trail), summoner, teleporter, boss. `ba.split`/`ba.nova` add
 //  on-death effects.
 const MTYPES={
-  wolf:{s:'m06',hp:14,dmg:5,spd:175,r:16,xp:1,h:60,name:'Wilk'},
-  spider:{s:'m07',hp:16,dmg:5,spd:135,r:16,xp:1,h:58,name:'Pająk',b:'puddle',ba:{every:1.7,r:58,dmg:3,dur:3.5,slow:0.45,color:'rgba(220,225,255,0.16)'}},
+  wolf:{s:'m06',hp:14,dmg:5,spd:175,r:16,xp:1,h:60,name:'Wolf'},
+  spider:{s:'m07',hp:16,dmg:5,spd:135,r:16,xp:1,h:58,name:'Spider',b:'puddle',ba:{every:1.7,r:58,dmg:3,dur:3.5,slow:0.45,color:'rgba(220,225,255,0.16)'}},
   goblin:{s:'m16',hp:18,dmg:6,spd:135,r:15,xp:1,h:62,name:'Goblin'},
-  harpy:{s:'m09',hp:14,dmg:5,spd:158,r:15,xp:1,h:64,name:'Harpia'},
-  plant:{s:'m12',hp:24,dmg:5,spd:60,r:15,xp:2,h:60,name:'Chochlik',b:'shooter',ba:{range:430,cd:1.8,burst:1,pdmg:6,pspeed:300,color:'#9be36b',sprite:'fx_p14'}},
-  orc:{s:'m02',hp:40,dmg:9,spd:95,r:18,xp:2,h:74,name:'Ork',b:'charger',ba:{range:360,cd:3.4,wind:0.5,dur:0.4,speed:560}},
+  harpy:{s:'m09',hp:14,dmg:5,spd:158,r:15,xp:1,h:64,name:'Harpy'},
+  plant:{s:'m12',hp:24,dmg:5,spd:60,r:15,xp:2,h:60,name:'Pixie',b:'shooter',ba:{range:430,cd:1.8,burst:1,pdmg:6,pspeed:300,color:'#9be36b',sprite:'fx_p14'}},
+  orc:{s:'m02',hp:40,dmg:9,spd:95,r:18,xp:2,h:74,name:'Orc',b:'charger',ba:{range:360,cd:3.4,wind:0.5,dur:0.4,speed:560}},
   zombie:{s:'m11',hp:34,dmg:7,spd:78,r:18,xp:2,h:74,name:'Zombie'},
   slime:{s:'m08',hp:46,dmg:6,spd:72,r:20,xp:2,h:62,name:'Slime',ba:{split:3}},
-  mushroom:{s:'m19',hp:36,dmg:7,spd:84,r:17,xp:2,h:70,name:'Grzyb',b:'puddle',ba:{every:2.2,r:72,dmg:5,dur:3,slow:0,color:'rgba(150,230,90,0.18)',nova:{r:95,dmg:9}}},
-  mummy:{s:'m20',hp:44,dmg:8,spd:74,r:17,xp:3,h:74,name:'Mumia',b:'summoner',ba:{cd:6,key:'goblin',n:2}},
-  fire:{s:'m10',hp:30,dmg:9,spd:100,r:16,xp:3,h:72,name:'Żywiołak Ognia',b:'puddle',ba:{every:0.9,r:54,dmg:6,dur:2.4,slow:0,color:'rgba(255,140,40,0.22)'}},
-  owlbear:{s:'m04',hp:78,dmg:11,spd:92,r:22,xp:4,h:78,name:'Sowoniedźwiedź',b:'charger',ba:{range:420,cd:3.1,wind:0.45,dur:0.45,speed:620}},
+  mushroom:{s:'m19',hp:36,dmg:7,spd:84,r:17,xp:2,h:70,name:'Mushroom',b:'puddle',ba:{every:2.2,r:72,dmg:5,dur:3,slow:0,color:'rgba(150,230,90,0.18)',nova:{r:95,dmg:9}}},
+  mummy:{s:'m20',hp:44,dmg:8,spd:74,r:17,xp:3,h:74,name:'Mummy',b:'summoner',ba:{cd:6,key:'goblin',n:2}},
+  fire:{s:'m10',hp:30,dmg:9,spd:100,r:16,xp:3,h:72,name:'Fire Elemental',b:'puddle',ba:{every:0.9,r:54,dmg:6,dur:2.4,slow:0,color:'rgba(255,140,40,0.22)'}},
+  owlbear:{s:'m04',hp:78,dmg:11,spd:92,r:22,xp:4,h:78,name:'Owlbear',b:'charger',ba:{range:420,cd:3.1,wind:0.45,dur:0.45,speed:620}},
   minotaur:{s:'m13',hp:98,dmg:14,spd:80,r:24,xp:5,h:84,name:'Minotaur',b:'charger',ba:{range:520,cd:3.8,wind:0.7,dur:0.6,speed:690}},
-  stone:{s:'m03',hp:135,dmg:12,spd:55,r:26,xp:6,h:90,name:'Golem Kamienny'},
-  clay:{s:'m17',hp:118,dmg:12,spd:58,r:26,xp:6,h:88,name:'Golem Gliniany'},
-  ice:{s:'m15',hp:145,dmg:13,spd:52,r:27,xp:7,h:90,name:'Golem Lodowy',b:'puddle',ba:{every:1.5,r:68,dmg:4,dur:4,slow:0.5,color:'rgba(120,200,255,0.20)'}},
-  wraith:{s:'m14',hp:55,dmg:10,spd:120,r:18,xp:4,h:80,name:'Zjawa',b:'teleporter',ba:{cd:3,dist:320}},
+  stone:{s:'m03',hp:135,dmg:12,spd:55,r:26,xp:6,h:90,name:'Stone Golem'},
+  clay:{s:'m17',hp:118,dmg:12,spd:58,r:26,xp:6,h:88,name:'Clay Golem'},
+  ice:{s:'m15',hp:145,dmg:13,spd:52,r:27,xp:7,h:90,name:'Ice Golem',b:'puddle',ba:{every:1.5,r:68,dmg:4,dur:4,slow:0.5,color:'rgba(120,200,255,0.20)'}},
+  wraith:{s:'m14',hp:55,dmg:10,spd:120,r:18,xp:4,h:80,name:'Wraith',b:'teleporter',ba:{cd:3,dist:320}},
   beholder:{s:'m05',hp:88,dmg:11,spd:66,r:20,xp:6,h:74,name:'Beholder',b:'shooter',ba:{range:520,cd:2.0,burst:3,spread:0.25,pdmg:7,pspeed:280,color:'#c86bff',sprite:'fx_p05'}},
   demon:{s:'m18',hp:165,dmg:15,spd:92,r:24,xp:8,h:90,name:'Demon',b:'lobber',ba:{range:560,cd:2.5,r:82,dmg:15}},
   octopus:{s:'m21',hp:155,dmg:14,spd:66,r:24,xp:8,h:80,name:'Kraken',b:'shooter',ba:{range:480,cd:2.2,burst:5,spread:0.5,pdmg:6,pspeed:240,color:'#8a5bd0',sprite:'fx_p20'}},
-  dragon:{s:'m01',hp:2400,dmg:22,spd:72,r:46,xp:120,h:172,name:'Pradawny Smok',boss:true,b:'boss'},
+  dragon:{s:'m01',hp:2400,dmg:22,spd:72,r:46,xp:120,h:172,name:'Ancient Dragon',boss:true,b:'boss'},
 };
 const ELITE_POOL=['orc','zombie','owlbear','minotaur','wraith','beholder','demon','fire'];
 const WAVES=[
@@ -311,20 +311,20 @@ const WAVES=[
 
 // ---------- In-run upgrades ----------
 const UPGRADES=[
-  {id:'power',name:'Power Surge',desc:'+12% obrażeń czarów',rar:'common',max:6,apply:p=>p.abilityDmg+=0.12},
-  {id:'haste',name:'Quick Hands',desc:'+12% szybkości ataku',rar:'common',max:6,apply:p=>p.attackSpeed+=0.12},
-  {id:'boots',name:'Swift Boots',desc:'+12% szybkości ruchu',rar:'common',max:6,apply:p=>p.moveBonus+=0.12},
-  {id:'vit',name:'Vitality',desc:'+25 maks. życia',rar:'common',max:8,apply:p=>{p.maxHp+=25;p.hp+=25;}},
-  {id:'focus',name:'Arcane Focus',desc:'-8% odnowienia',rar:'rare',max:5,apply:p=>p.cdr+=0.08},
-  {id:'split',name:'Split Shot',desc:'+1 pocisk ataku',rar:'epic',max:3,apply:p=>p.projectiles+=1},
-  {id:'pierce',name:'Piercing Magic',desc:'+1 przebicie ataku',rar:'rare',max:3,apply:p=>p.pierce+=1},
-  {id:'frost',name:'Frost Mastery',desc:'+25% promienia Frost',rar:'rare',max:3,apply:p=>p.frostRadius+=0.25},
-  {id:'dashcd',name:'Dash Recovery',desc:'-20% odnowienia Dash',rar:'epic',max:3,apply:p=>p.dashCdr+=0.20},
-  {id:'ultcd',name:'Ultimate Charge',desc:'-15% odnowienia Ult',rar:'legendary',max:3,apply:p=>p.ultCdr+=0.15},
-  {id:'crit',name:'Deadly Aim',desc:'+6% szansy na kryt.',rar:'rare',max:5,apply:p=>p.crit+=0.06},
-  {id:'lifesteal',name:'Vampirism',desc:'Leczenie z zabójstw',rar:'epic',max:3,apply:p=>p.lifesteal+=1},
-  {id:'magnet',name:'Greater Magnet',desc:'+30% zasięgu zbierania',rar:'common',max:4,apply:p=>p.magnet+=0.30},
-  {id:'regen',name:'Regeneration',desc:'+1 życia / s',rar:'rare',max:5,apply:p=>p.regen+=1},
+  {id:'power',name:'Power Surge',desc:'+12% ability damage',rar:'common',max:6,apply:p=>p.abilityDmg+=0.12},
+  {id:'haste',name:'Quick Hands',desc:'+12% attack speed',rar:'common',max:6,apply:p=>p.attackSpeed+=0.12},
+  {id:'boots',name:'Swift Boots',desc:'+12% move speed',rar:'common',max:6,apply:p=>p.moveBonus+=0.12},
+  {id:'vit',name:'Vitality',desc:'+25 max health',rar:'common',max:8,apply:p=>{p.maxHp+=25;p.hp+=25;}},
+  {id:'focus',name:'Arcane Focus',desc:'-8% cooldown',rar:'rare',max:5,apply:p=>p.cdr+=0.08},
+  {id:'split',name:'Split Shot',desc:'+1 attack projectile',rar:'epic',max:3,apply:p=>p.projectiles+=1},
+  {id:'pierce',name:'Piercing Magic',desc:'+1 attack pierce',rar:'rare',max:3,apply:p=>p.pierce+=1},
+  {id:'frost',name:'Frost Mastery',desc:'+25% Frost radius',rar:'rare',max:3,apply:p=>p.frostRadius+=0.25},
+  {id:'dashcd',name:'Dash Recovery',desc:'-20% Dash cooldown',rar:'epic',max:3,apply:p=>p.dashCdr+=0.20},
+  {id:'ultcd',name:'Ultimate Charge',desc:'-15% Ultimate cooldown',rar:'legendary',max:3,apply:p=>p.ultCdr+=0.15},
+  {id:'crit',name:'Deadly Aim',desc:'+6% crit chance',rar:'rare',max:5,apply:p=>p.crit+=0.06},
+  {id:'lifesteal',name:'Vampirism',desc:'Heal on kills',rar:'epic',max:3,apply:p=>p.lifesteal+=1},
+  {id:'magnet',name:'Greater Magnet',desc:'+30% pickup range',rar:'common',max:4,apply:p=>p.magnet+=0.30},
+  {id:'regen',name:'Regeneration',desc:'+1 health / s',rar:'rare',max:5,apply:p=>p.regen+=1},
 ];
 const RAR={common:'#9aa0ad',rare:'#4d96ff',epic:'#b06bff',legendary:'#ffb340'};
 const stacks={};
@@ -400,7 +400,7 @@ function kill(e){
   const g=Math.max(1,Math.round(e.xp*1.2*(e.elite?4:1)*(e.boss?25:1)));
   G.coins.push({x:e.x+rand(-8,8),y:e.y+rand(-8,8),v:g,r:7});
   if(e.boss){/* victory below */}
-  else if(e.elite){G.items.push({type:'chest',x:e.x,y:e.y,r:16});banner('💎 SKRZYNIA!',1.2);}
+  else if(e.elite){G.items.push({type:'chest',x:e.x,y:e.y,r:16});banner('💎 CHEST!',1.2);}
   else{const roll=Math.random();
     if(roll<0.020)G.items.push({type:'heart',x:e.x,y:e.y,r:13});
     else if(roll<0.032)G.items.push({type:'magnet',x:e.x,y:e.y,r:13});
@@ -420,7 +420,7 @@ function damagePlayer(amount){
   const p=G.player; if(!p||p.iframe>0||G.state!==St.Play)return;
   p.hp-=amount; sfx('hurt'); addShake(4);
   if(p.hp<=0){
-    if(p.revives>0){p.revives--;p.hp=p.maxHp*0.6;p.iframe=2.2;banner('🔥 WSKRZESZENIE!',1.6);sfx('revive');addShake(16);spawnBurst(p.x,p.y,'#ff7a3a',24);
+    if(p.revives>0){p.revives--;p.hp=p.maxHp*0.6;p.iframe=2.2;banner('🔥 REVIVE!',1.6);sfx('revive');addShake(16);spawnBurst(p.x,p.y,'#ff7a3a',24);
       for(const o of G.enemies){if(o.dead)continue;const ox=o.x-p.x,oy=o.y-p.y,od=Math.hypot(ox,oy)||1;o.x+=ox/od*120;o.y+=oy/od*120;}}
     else{p.hp=0;over(false);}
   }
@@ -547,13 +547,13 @@ function closeLevel(){if(G.pending>0){openLevel();return;}$('levelOverlay').styl
 // ---------- Pickups ----------
 function collectItem(it){
   const p=G.player;
-  if(it.type==='heart'){p.hp=Math.min(p.maxHp,p.hp+p.maxHp*0.25);banner('+ZDROWIE',0.9);spawnBurst(p.x,p.y,'#4dff88',10);sfx('heal');}
-  else if(it.type==='magnet'){G.magnetT=1.3;banner('MAGNES',0.8);sfx('coin');}
-  else if(it.type==='bomb'){addShake(12);sfx('bomb');spawnBurst(p.x,p.y,'#ffcf6b',20);banner('BUM!',0.9);
+  if(it.type==='heart'){p.hp=Math.min(p.maxHp,p.hp+p.maxHp*0.25);banner('+HEALTH',0.9);spawnBurst(p.x,p.y,'#4dff88',10);sfx('heal');}
+  else if(it.type==='magnet'){G.magnetT=1.3;banner('MAGNET',0.8);sfx('coin');}
+  else if(it.type==='bomb'){addShake(12);sfx('bomb');spawnBurst(p.x,p.y,'#ffcf6b',20);banner('BOOM!',0.9);
     for(const e of G.enemies){if(e.dead)continue;const dx=e.x-p.x,dy=e.y-p.y;
       if(dx*dx+dy*dy < (1000/ZOOM)*(1000/ZOOM)) hurt(e,140+e.maxHp*0.25);}}
   else if(it.type==='chest'){const gold=Math.round(rand(30,60)*p.goldMul);G.gold+=gold;G.pending++;
-    banner('💎 +'+gold+' ZŁOTA',1.0);spawnBurst(it.x,it.y,'#ffd23f',16);sfx('coin');if(G.state===St.Play)openLevel();}
+    banner('💎 +'+gold+' GOLD',1.0);spawnBurst(it.x,it.y,'#ffd23f',16);sfx('coin');if(G.state===St.Play)openLevel();}
   it.dead=true;
 }
 
@@ -563,12 +563,12 @@ function over(win){
   const score=G.kills*10+Math.floor(G.time)*5+G.player.level*40+(win?2000:0);
   const rec=score>META.best; if(rec)META.best=score;
   saveMeta();
-  $('endTitle').textContent=win?'🏆 Zwycięstwo!':'☠ Porażka';
+  $('endTitle').textContent=win?'🏆 Victory!':'☠ Defeat';
   $('endText').innerHTML=
-    `Czas: <b>${fmtTime(G.time)}</b> &nbsp;·&nbsp; Poziom: <b>${G.player.level}</b><br>`+
-    `Zabójstwa: <b>${G.kills}</b> &nbsp;·&nbsp; Najlepsze combo: <b>x${G.bestCombo}</b><br>`+
-    `Zdobyte złoto: <b style="color:#ffd23f">🪙 ${G.gold}</b><br>`+
-    `Wynik: <b>${score}</b>${rec?' &nbsp;🌟 <b>NOWY REKORD!</b>':''}`;
+    `Time: <b>${fmtTime(G.time)}</b> &nbsp;·&nbsp; Level: <b>${G.player.level}</b><br>`+
+    `Kills: <b>${G.kills}</b> &nbsp;·&nbsp; Best combo: <b>x${G.bestCombo}</b><br>`+
+    `Gold earned: <b style="color:#ffd23f">🪙 ${G.gold}</b><br>`+
+    `Score: <b>${score}</b>${rec?' &nbsp;🌟 <b>NEW RECORD!</b>':''}`;
   $('endOverlay').style.display='flex';refreshMenu();
 }
 
@@ -612,7 +612,7 @@ addEventListener('pointerdown',ensureAudio,{once:true});
 
 // ---------- Menu / Forge ----------
 function refreshMenu(){
-  $('menuStats').innerHTML=`🪙 Złoto: <b style="color:#ffd23f">${META.gold}</b> &nbsp;·&nbsp; 🌟 Rekord: <b>${META.best}</b>`;
+  $('menuStats').innerHTML=`🪙 Gold: <b style="color:#ffd23f">${META.gold}</b> &nbsp;·&nbsp; 🌟 Best: <b>${META.best}</b>`;
 }
 function openForge(){G.prevState=G.state;G.state=St.Forge;
   $('startOverlay').style.display='none';$('endOverlay').style.display='none';
@@ -627,7 +627,7 @@ function buildForge(){
     const el=document.createElement('div');el.className='mitem'+(maxed?' maxed':'');
     let pips='';for(let i=0;i<d.max;i++)pips+=i<lv?'●':'○';
     el.innerHTML=`<div class="mn">${d.name}</div><div class="md">${d.desc}</div>`+
-      `<div class="pips">${pips}</div><div class="mc">${maxed?'MAKS':('🪙 '+cost)}</div>`;
+      `<div class="pips">${pips}</div><div class="mc">${maxed?'MAX':('🪙 '+cost)}</div>`;
     if(!maxed)el.onpointerup=ev=>{ev.preventDefault();buyMeta(d.id);};
     grid.appendChild(el);}
 }
@@ -674,7 +674,7 @@ function start(){
   const sl=metaVal('start');if(sl>0){p.level=1+sl;G.pending=sl;openLevel();}
 }
 $('startBtn').onclick=start;$('restartBtn').onclick=start;
-function onAssetsReady(){$('startSub').textContent='Przetrwaj 5 minut — wtedy nadejdzie Pradawny Smok. Pokonaj go, aby wygrać.';
+function onAssetsReady(){$('startSub').textContent='Survive 5 minutes — then the Ancient Dragon arrives. Defeat it to win.';
   $('startBtn').style.display='';$('forgeBtn').style.display='';refreshMenu();}
 
 // ---------- Update ----------
@@ -691,7 +691,7 @@ function update(dt){
   spawnAcc+=curWave.rate*dt;
   while(spawnAcc>=1&&G.enemies.length<curWave.cap){spawnAcc-=1;spawnEnemy(curWave.pool[(Math.random()*curWave.pool.length)|0]);}
   if(spawnAcc>3)spawnAcc=3;
-  G.eliteT-=dt;if(G.eliteT<=0){G.eliteT=rand(18,26);spawnEnemy(ELITE_POOL[(Math.random()*ELITE_POOL.length)|0],true);banner('☠ ELITA!',1.0);}
+  G.eliteT-=dt;if(G.eliteT<=0){G.eliteT=rand(18,26);spawnEnemy(ELITE_POOL[(Math.random()*ELITE_POOL.length)|0],true);banner('☠ ELITE!',1.0);}
   // Final boss appears once the clock runs out; victory is granted only on its defeat.
   if(G.time>=G.dur&&!bossSpawned){bossSpawned=true;spawnEnemy('dragon');}
 
