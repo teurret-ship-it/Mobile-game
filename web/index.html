@@ -90,6 +90,13 @@
   .mitem .md { font-size:12px; opacity:.8; margin:3px 0 6px; }
   .mitem .mc { font-size:13px; font-weight:800; color:#ffd23f; }
   .mitem .pips { font-size:11px; letter-spacing:2px; color:#6cf; }
+
+  #fsHud { position:absolute; right:14px; top:70px; font-size:18px; pointer-events:auto; cursor:pointer; opacity:.85; }
+  #rotate { position:fixed; inset:0; background:#0b0d12; z-index:50; display:none;
+    flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:30px; }
+  #rotate .ic { font-size:64px; animation:rothint 1.8s ease-in-out infinite; transform-origin:center; }
+  #rotate p { font-size:20px; font-weight:700; margin-top:16px; }
+  @keyframes rothint { 0%,40%{transform:rotate(0)} 70%,100%{transform:rotate(-90deg)} }
 </style>
 </head>
 <body>
@@ -104,6 +111,7 @@
   <div id="timerText">05:00</div>
   <div id="goldHud">🪙 0</div>
   <div id="muteBtn">🔊</div>
+  <div id="fsHud">⛶</div>
   <div id="comboHud"></div>
   <div id="banner"></div>
   <div id="bossWrap"><div id="bossName">Boss</div><div class="bar" id="bossBar"><div class="fill"></div></div></div>
@@ -149,6 +157,12 @@
     <button class="btn" id="restartBtn">Zagraj ponownie</button>
     <button class="btn gold" id="endForgeBtn">🔨 Kuźnia</button>
   </div>
+</div>
+
+<div id="rotate">
+  <div class="ic">📱</div>
+  <p>Obróć telefon poziomo</p>
+  <button class="btn" id="fsBtn" style="margin-top:18px">Pełny ekran</button>
 </div>
 
 <script>
@@ -624,9 +638,23 @@ $('forgeClose').onclick=closeForge;
 $('muteBtn').onclick=()=>{muted=!muted;META.muted=muted;saveMeta();$('muteBtn').textContent=muted?'🔇':'🔊';if(!muted)ensureAudio();};
 $('muteBtn').textContent=muted?'🔇':'🔊';
 
+// ---------- Fullscreen + landscape lock ----------
+function isFs(){return document.fullscreenElement||document.webkitFullscreenElement;}
+function lockLandscape(){try{if(screen.orientation&&screen.orientation.lock)screen.orientation.lock('landscape').catch(()=>{});}catch(_){}}
+function goFullscreen(){
+  const el=document.documentElement;
+  const rfs=el.requestFullscreen||el.webkitRequestFullscreen||el.msRequestFullscreen;
+  try{ if(rfs&&!isFs()){const r=rfs.call(el); if(r&&r.then)r.then(lockLandscape).catch(lockLandscape); else lockLandscape(); }
+       else lockLandscape(); }catch(_){lockLandscape();}
+}
+function toggleFs(){ if(isFs()){const ex=document.exitFullscreen||document.webkitExitFullscreen; if(ex)ex.call(document);} else goFullscreen(); }
+$('fsHud').onclick=toggleFs;
+$('fsBtn').onclick=goFullscreen;
+addEventListener('orientationchange',()=>setTimeout(resize,250));
+
 // ---------- Start ----------
 function start(){
-  ensureAudio();
+  ensureAudio();goFullscreen();
   const p=makePlayer();
   p.maxHp+=metaVal('hp');p.hp=p.maxHp;
   p.dmgMul=1+metaVal('dmg');p.moveBonus+=metaVal('spd');p.crit=metaVal('crit');
@@ -905,7 +933,11 @@ function hud(){
 }
 
 let last=performance.now();
-function frame(now){let dt=(now-last)/1000;last=now;if(dt>0.05)dt=0.05;update(dt);render();hud();requestAnimationFrame(frame);}
+const elRotate=$('rotate');
+function frame(now){let dt=(now-last)/1000;last=now;if(dt>0.05)dt=0.05;
+  // Force landscape: when held in portrait, show the rotate prompt and freeze the sim.
+  const portrait=VH>VW; elRotate.style.display=portrait?'flex':'none'; if(portrait)dt=0;
+  update(dt);render();hud();requestAnimationFrame(frame);}
 $('startOverlay').style.display='flex';refreshMenu();
 requestAnimationFrame(frame);
 })();
