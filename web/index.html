@@ -121,8 +121,9 @@ const dist2=(ax,ay,bx,by)=>{const dx=ax-bx,dy=ay-by;return dx*dx+dy*dy;};
 const fmtTime=s=>{s=Math.max(0,Math.ceil(s));const m=(s/60)|0,ss=s%60;return(m<10?'0':'')+m+':'+(ss<10?'0':'')+ss;};
 
 // ---------- Isometric projection ----------
-const ZOOM=0.72;                          // <1 = camera further out (wider field of view)
+const ZOOM=0.48;                          // <1 = camera further out (wider field of view)
 const ISO_X=0.62*ZOOM, ISO_Y=0.34*ZOOM;   // 2:1-ish tilt
+const SPR=ZOOM/0.72;                       // scale sprites/shadows with the zoom (1.0 = prior look)
 const DASH_DUR=0.16;                       // dash travel time (smooth glide, not a teleport)
 const HERO_H=112;                          // hero sprite draw height (px)
 const RT={x:Math.SQRT1_2,y:-Math.SQRT1_2}; // world dir for "screen right"
@@ -470,10 +471,10 @@ function isoEllipse(wx,wy,rr,stroke,fill){
 }
 function drawSprite(e){
   const[sx,sy]=w2s(e.x,e.y);
-  shadow(sx,sy,e.r);
+  shadow(sx,sy,e.r*SPR);
   const img=SPRITES[e.sprite];
   if(img&&img.complete&&img.naturalWidth){
-    const h=e.h,w=h*(img.naturalWidth/img.naturalHeight);
+    const h=e.h*SPR,w=h*(img.naturalWidth/img.naturalHeight);
     ctx.save();ctx.translate(sx,sy+4);ctx.scale(e.face,1);
     if(e.flash>0){ctx.globalAlpha=1;}
     ctx.drawImage(img,-w/2,-h,w,h);
@@ -482,15 +483,15 @@ function drawSprite(e){
     if(e.slowT>0)isoEllipse(e.x,e.y,e.r,'rgba(120,200,255,0.7)',null);
     // hp bar
     if(e.boss){/* boss bar in HUD */}
-    else if(e.hp<e.maxHp){ctx.fillStyle='rgba(0,0,0,.5)';ctx.fillRect(sx-e.r,sy-h-6,e.r*2,4);
-      ctx.fillStyle='#ff7a7a';ctx.fillRect(sx-e.r,sy-h-6,e.r*2*(e.hp/e.maxHp),4);}
+    else if(e.hp<e.maxHp){const rw=e.r*SPR;ctx.fillStyle='rgba(0,0,0,.5)';ctx.fillRect(sx-rw,sy-h-6,rw*2,4);
+      ctx.fillStyle='#ff7a7a';ctx.fillRect(sx-rw,sy-h-6,rw*2*(e.hp/e.maxHp),4);}
   } else { shadow(sx,sy,e.r); ctx.fillStyle='#d65a5a';ctx.beginPath();ctx.arc(sx,sy-e.r,e.r,0,Math.PI*2);ctx.fill(); }
 }
 function drawPlayer(){
-  const p=G.player,[sx,sy]=w2s(p.x,p.y);shadow(sx,sy,p.r*1.15);
+  const p=G.player,[sx,sy]=w2s(p.x,p.y);shadow(sx,sy,p.r*1.15*SPR);
   const img=SPRITES['hero'];
   if(img&&img.complete&&img.naturalWidth){
-    const h=HERO_H, w=h*(img.naturalWidth/img.naturalHeight);
+    const h=HERO_H*SPR, w=h*(img.naturalWidth/img.naturalHeight);
     ctx.save();ctx.translate(sx,sy+5);ctx.scale(p.face,1);
     ctx.drawImage(img,-w/2,-h,w,h);
     if(p.iframe>0){ // dash shimmer
