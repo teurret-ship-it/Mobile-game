@@ -54,6 +54,13 @@
   #btn3 { width:64px; height:64px; right:62px; bottom:134px; background:rgba(255,170,80,.62); }
   #btnUlt { width:86px; height:86px; right:4px; bottom:30px; background:rgba(255,80,80,.62); }
 
+  #build { position:absolute; left:14px; top:78px; display:flex; gap:8px; }
+  .bbtn { pointer-events:auto; background:rgba(0,0,0,.5); border:1px solid rgba(255,255,255,.25);
+    border-radius:8px; padding:5px 8px; font-size:12px; font-weight:700; text-shadow:0 1px 2px #000; touch-action:none; }
+  .bbtn b { color:#ffd23f; }
+  .bbtn.cant { opacity:.4; }
+  .bbtn:active { filter:brightness(1.3); }
+
   .overlay { position:fixed; inset:0; background:rgba(0,0,0,.82); display:none;
     flex-direction:column; align-items:center; justify-content:center; z-index:20; padding:20px; text-align:center; }
   .overlay h1 { font-size:38px; margin-bottom:6px; }
@@ -100,6 +107,10 @@
   <div id="comboHud"></div>
   <div id="banner"></div>
   <div id="bossWrap"><div id="bossName">Boss</div><div class="bar" id="bossBar"><div class="fill"></div></div></div>
+  <div id="build">
+    <div class="bbtn" id="bTurret">🗼 Wieża <b id="cTurret">40</b></div>
+    <div class="bbtn" id="bBarricade">🧱 Mur <b id="cBarricade">18</b></div>
+  </div>
 </div>
 
 <div id="buttons">
@@ -118,7 +129,7 @@
     <button class="btn" id="startBtn" style="display:none">Graj</button>
     <button class="btn gold" id="forgeBtn" style="display:none">🔨 Kuźnia</button>
   </div>
-  <div id="startHint">Lewa połowa = ruch. Czary (1/2/3/R): przytrzymaj i przeciągnij, by wycelować. A — atak. Zbieraj 🪙 złoto i wydawaj je w Kuźni na trwałe ulepszenia. Łańcuch zabójstw = mnożnik nagród.</div>
+  <div id="startHint">Lewa połowa = ruch. Czary (1/2/3/R): przytrzymaj i przeciągnij, by wycelować. A — atak (tap = najbliższy, przeciągnij = celuj). Zbieraj 🪙 złoto: wydawaj w grze na 🗼 wieże i 🧱 mury obronne, albo zachowaj na trwałe ulepszenia w Kuźni. Łańcuch zabójstw = mnożnik nagród.</div>
 </div>
 
 <div class="overlay" id="levelOverlay">
@@ -163,6 +174,11 @@ const $=id=>document.getElementById(id);
 // ---------- Isometric projection ----------
 const ZOOM=0.48, ISO_X=0.62*ZOOM, ISO_Y=0.34*ZOOM, SPR=ZOOM/0.72;
 const DASH_DUR=0.16, HERO_H=112, UNIT_SPEED=1.5;
+const ENEMY_SEP=460;                       // anti-overlap separation strength (0 = stacking allowed)
+const STRUCT={
+  turret:{name:'Wieżyczka',ico:'🗼',cost:c=>40+c*25,hp:60,r:17,range:440,fireCd:0.9,dmg:14,max:10,color:'#7ec8ff'},
+  barricade:{name:'Barykada',ico:'🧱',cost:c=>18+c*12,hp:170,r:20,max:14,color:'#c79a5a'},
+};
 const RT={x:Math.SQRT1_2,y:-Math.SQRT1_2}, DN={x:Math.SQRT1_2,y:Math.SQRT1_2};
 const CAM={x:0,y:0};
 function w2s(wx,wy){const dx=wx-CAM.x,dy=wy-CAM.y;return[VW/2+(dx-dy)*ISO_X,VH*0.46+(dx+dy)*ISO_Y];}
@@ -302,7 +318,7 @@ const stacks={};
 // ---------- State ----------
 const St={Menu:0,Play:1,Level:2,Over:3,Forge:4};
 const G={state:St.Menu,time:0,dur:300,player:null,
-  enemies:[],projectiles:[],eprojs:[],hazards:[],zones:[],meteors:[],orbs:[],coins:[],items:[],parts:[],popups:[],
+  enemies:[],projectiles:[],eprojs:[],hazards:[],zones:[],meteors:[],orbs:[],coins:[],items:[],parts:[],popups:[],structures:[],
   boss:null,pending:0,gold:0,kills:0,combo:0,comboT:0,bestCombo:0,eliteT:20,magnetT:0,
   shakeT:0,shakeMag:0,banner:'',bannerT:0,prevState:St.Menu};
 let waveIdx=0,curWave=WAVES[0],spawnAcc=0,bossSpawned=false;
@@ -482,6 +498,20 @@ function fireBasic(dir){
   p.attackCd=basicInt(p);sfx('hit');
 }
 
+// ---------- Base defence structures ----------
+function structCount(type){let n=0;for(const s of G.structures)if(s.type===type)n++;return n;}
+function buildStruct(type){
+  if(G.state!==St.Play)return;
+  const def=STRUCT[type],count=structCount(type);
+  if(count>=def.max)return;
+  const cost=def.cost(count); if(G.gold<cost){addShake(2);return;}
+  G.gold-=cost; sfx('buy');
+  const p=G.player, off=p.facing||{x:0,y:1};
+  G.structures.push({type,x:p.x+off.x*26,y:p.y+off.y*26,r:def.r,hp:def.hp,maxHp:def.hp,
+    cd:0,range:def.range||0,fireCd:def.fireCd||0,dmg:def.dmg||0,color:def.color});
+  spawnBurst(p.x+off.x*26,p.y+off.y*26,def.color,12);
+}
+
 // ---------- XP / Level ----------
 function addXp(n){const p=G.player;p.xp+=n;
   while(p.xp>=p.xpNeed){p.xp-=p.xpNeed;p.level++;p.xpNeed=Math.ceil(p.xpNeed*1.45)+2;G.pending++;}
@@ -556,6 +586,8 @@ function bindBasicAim(id){const el=$(id);
     if(aim.slot===BASIC){fireBasic(aim.has?screenDirToWorld(aim.dx,aim.dy):null);aim.slot=-1;aim.id=null;aim.has=false;}};
   el.addEventListener('pointerup',up);el.addEventListener('pointercancel',up);}
 bindBasicAim('btnBasic');bindSkill('btn1',0);bindSkill('btn2',1);bindSkill('btn3',2);bindSkill('btnUlt',3);
+function bindBuild(id,type){const el=$(id);el.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();ensureAudio();buildStruct(type);});}
+bindBuild('bTurret','turret');bindBuild('bBarricade','barricade');
 
 const keys={};
 addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;
@@ -600,7 +632,7 @@ function start(){
   p.dmgMul=1+metaVal('dmg');p.moveBonus+=metaVal('spd');p.crit=metaVal('crit');
   p.magnet=1+metaVal('magnet');p.xpMul=1+metaVal('xp');p.goldMul=1+metaVal('greed');p.revives=metaVal('revive');
   G.player=p;
-  G.enemies=[];G.projectiles=[];G.eprojs=[];G.hazards=[];G.zones=[];G.meteors=[];G.orbs=[];G.coins=[];G.items=[];G.parts=[];G.popups=[];
+  G.enemies=[];G.projectiles=[];G.eprojs=[];G.hazards=[];G.zones=[];G.meteors=[];G.orbs=[];G.coins=[];G.items=[];G.parts=[];G.popups=[];G.structures=[];
   G.time=0;G.boss=null;G.pending=0;G.gold=0;G.kills=0;G.combo=0;G.comboT=0;G.bestCombo=0;G.eliteT=20;G.magnetT=0;
   G.shakeT=0;G.shakeMag=0;G.banner='';G.bannerT=0;
   for(const k in stacks)delete stacks[k];
@@ -655,8 +687,29 @@ function update(dt){
     const dx=p.x-e.x,dy=p.y-e.y,d=Math.hypot(dx,dy)||1;
     e.face=(w2s(p.x,p.y)[0]>=w2s(e.x,e.y)[0])?1:-1;
     runBehavior(e,p,d,spd,dt);
+    if(e.atkCd<=0){for(const s of G.structures){if(dist2(e.x,e.y,s.x,s.y)<=(e.r+s.r+2)*(e.r+s.r+2)){e.atkCd=1.0;s.hp-=e.dmg;if(s.hp<=0)spawnBurst(s.x,s.y,'#999',12);break;}}}
     if(d<=e.r+p.r+2&&e.atkCd<=0){e.atkCd=1.0;damagePlayer(e.dmg);}
   }
+  // anti-overlap separation (spatial hash so enemies spread instead of stacking)
+  if(ENEMY_SEP>0&&G.enemies.length>1){
+    const CELL=70,grid=new Map();
+    for(const e of G.enemies){if(e.dead)continue;const k=Math.floor(e.x/CELL)+','+Math.floor(e.y/CELL);let a=grid.get(k);if(!a){a=[];grid.set(k,a);}a.push(e);}
+    for(const e of G.enemies){if(e.dead)continue;
+      const cx=Math.floor(e.x/CELL),cy=Math.floor(e.y/CELL);let px=0,py=0;
+      for(let gx=cx-1;gx<=cx+1;gx++)for(let gy=cy-1;gy<=cy+1;gy++){const a=grid.get(gx+','+gy);if(!a)continue;
+        for(const o of a){if(o===e)continue;const ox=e.x-o.x,oy=e.y-o.y,mn=(e.r+o.r)*0.9,q=ox*ox+oy*oy;
+          if(q>0.01&&q<mn*mn){const dd=Math.sqrt(q),f=(mn-dd)/mn;px+=ox/dd*f;py+=oy/dd*f;}}}
+      for(const s of G.structures){const ox=e.x-s.x,oy=e.y-s.y,mn=e.r+s.r,q=ox*ox+oy*oy;
+        if(q>0.01&&q<mn*mn){const dd=Math.sqrt(q),f=(mn-dd)/mn;px+=ox/dd*f*1.8;py+=oy/dd*f*1.8;}}
+      e.x+=px*ENEMY_SEP*dt;e.y+=py*ENEMY_SEP*dt;
+    }
+  }
+  // turrets fire at the nearest enemy
+  for(const s of G.structures){if(s.type==='turret'){s.cd-=dt;
+    if(s.cd<=0){const tgt=nearest(s.x,s.y,s.range);
+      if(tgt){s.cd=s.fireCd;const tx=tgt.x-s.x,ty=tgt.y-s.y,m=Math.hypot(tx,ty)||1;
+        spawnProj(s.x,s.y-12,{x:tx/m,y:ty/m},560,s.dmg,0,{r:6,life:1.4,color:'#7ec8ff',sprite:'fx_p11'});}}}}
+  G.structures=G.structures.filter(s=>s.hp>0);
   // enemy projectiles
   for(const q of G.eprojs){q.x+=q.vx*dt;q.y+=q.vy*dt;q.life-=dt;
     if(q.life>0&&dist2(q.x,q.y,p.x,p.y)<=(p.r+q.r)*(p.r+q.r)){damagePlayer(q.dmg);q.life=0;}}
@@ -740,6 +793,21 @@ function drawSprite(e){
       ctx.fillStyle=e.elite?'#ffd23f':'#ff7a7a';ctx.fillRect(sx-rw,sy-h-6,rw*2*(e.hp/e.maxHp),4);}
   } else {ctx.fillStyle='#d65a5a';ctx.beginPath();ctx.arc(sx,sy-e.r,e.r,0,Math.PI*2);ctx.fill();}
 }
+function drawStruct(s){
+  const[sx,sy]=w2s(s.x,s.y),R=s.r*SPR;shadow(sx,sy,R);
+  if(s.type==='turret'){
+    ctx.fillStyle='#3a4252';ctx.beginPath();ctx.ellipse(sx,sy,R,R*0.5,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#5a6573';ctx.fillRect(sx-6*SPR,sy-26*SPR,12*SPR,24*SPR);
+    ctx.fillStyle=s.color;ctx.beginPath();ctx.arc(sx,sy-28*SPR,8*SPR,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,0.6)';ctx.beginPath();ctx.arc(sx-2*SPR,sy-30*SPR,3*SPR,0,Math.PI*2);ctx.fill();
+  } else {
+    ctx.fillStyle='#6b4f2a';ctx.fillRect(sx-R,sy-22*SPR,R*2,24*SPR);
+    ctx.fillStyle='#8a6a3a';ctx.fillRect(sx-R,sy-22*SPR,R*2,7*SPR);
+    ctx.strokeStyle='#3c2c16';ctx.lineWidth=2;ctx.strokeRect(sx-R,sy-22*SPR,R*2,24*SPR);
+  }
+  if(s.hp<s.maxHp){ctx.fillStyle='rgba(0,0,0,.5)';ctx.fillRect(sx-R,sy-36*SPR,R*2,4);
+    ctx.fillStyle='#6cf';ctx.fillRect(sx-R,sy-36*SPR,R*2*(s.hp/s.maxHp),4);}
+}
 function drawPlayer(){
   const p=G.player,[sx,sy]=w2s(p.x,p.y);shadow(sx,sy,p.r*1.15*SPR);
   const img=SPRITES['hero'];
@@ -791,8 +859,9 @@ function render(){
   for(const it of G.items)drawItem(it);
   drawAim();
   const units=G.enemies.slice();units.push({_p:true,x:G.player.x,y:G.player.y});
+  for(const s of G.structures)units.push({_s:s,x:s.x,y:s.y});
   units.sort((a,b)=>(a.x+a.y)-(b.x+b.y));
-  for(const u of units){if(u._p)drawPlayer();else drawSprite(u);}
+  for(const u of units){if(u._p)drawPlayer();else if(u._s)drawStruct(u._s);else drawSprite(u);}
   for(const pr of G.projectiles)drawFx(pr.sprite,pr.x,pr.y,pr.vx,pr.vy,(pr.r||7)*5.2,pr.color);
   for(const q of G.eprojs)drawFx(q.spr,q.x,q.y,q.vx,q.vy,(q.r||8)*5,q.color);
   for(const pt of G.parts){const[sx,sy]=w2s(pt.x,pt.y);ctx.globalAlpha=clamp(pt.life/pt.max,0,1);ctx.fillStyle=pt.color;
@@ -809,6 +878,7 @@ function render(){
 const elHP=document.querySelector('#healthBar .fill'),elHPT=$('healthText'),elXP=document.querySelector('#xpBar .fill');
 const elLv=$('levelText'),elTm=$('timerText'),elBoss=document.querySelector('#bossBar .fill');
 const elGold=$('goldHud'),elCombo=$('comboHud'),elBanner=$('banner'),elVig=$('vignette');
+const bTur=$('bTurret'),bBar=$('bBarricade'),cTur=$('cTurret'),cBar=$('cBarricade');
 const cd={};['btnBasic','btn1','btn2','btn3','btnUlt'].forEach(id=>{cd[id]=document.querySelector('#'+id+' .cd');cd[id+'n']=document.querySelector('#'+id+' .cdnum');});
 function setCd(id,c,m){const f=m>0?clamp(c/m,0,1):0;cd[id].style.transform=`scaleY(${f})`;cd[id+'n'].textContent=c>0.05?Math.ceil(c):'';}
 function hud(){
@@ -828,6 +898,10 @@ function hud(){
   if(G.boss)elBoss.style.transform=`scaleX(${clamp(G.boss.hp/G.boss.maxHp,0,1)})`;
   setCd('btnBasic',p.attackCd,basicInt(p));
   ['btn1','btn2','btn3','btnUlt'].forEach((id,i)=>setCd(id,p.abil[i].cd,abCd(p,i)));
+  const tc=STRUCT.turret.cost(structCount('turret')),bc=STRUCT.barricade.cost(structCount('barricade'));
+  cTur.textContent=tc;cBar.textContent=bc;
+  bTur.classList.toggle('cant',G.gold<tc||structCount('turret')>=STRUCT.turret.max);
+  bBar.classList.toggle('cant',G.gold<bc||structCount('barricade')>=STRUCT.barricade.max);
 }
 
 let last=performance.now();
