@@ -151,6 +151,18 @@ function loadSprite(id,ver){
 for(let i=1;i<=21;i++) loadSprite('m'+String(i).padStart(2,'0'));
 loadSprite('hero','3');   // bump version to bust the browser/CDN cache after art changes
 
+// ---------- Ground texture ----------
+const GRASS={img:new Image(),pat:null,tile:340};
+spritesTotal++;
+GRASS.img.onload=()=>{buildGrass();spritesLoaded++;if(spritesLoaded>=spritesTotal)onAssetsReady();};
+GRASS.img.onerror=()=>{spritesLoaded++;if(spritesLoaded>=spritesTotal)onAssetsReady();};
+GRASS.img.src='assets/grass.jpg?v=1';
+function buildGrass(){
+  const T=GRASS.tile,c=document.createElement('canvas');c.width=c.height=T;
+  c.getContext('2d').drawImage(GRASS.img,0,0,T,T);
+  GRASS.pat=ctx.createPattern(c,'repeat');
+}
+
 // ---------- Monster roster (from the spritesheet) ----------
 const MTYPES={
   wolf:    {s:'m06',hp:14, dmg:5, spd:170,r:16,xp:1,h:60,name:'Wilk'},
@@ -453,16 +465,20 @@ function update(dt){
 
 // ---------- Render ----------
 function drawGround(){
-  ctx.fillStyle='#0f121a';ctx.fillRect(0,0,VW,VH);
-  ctx.strokeStyle='rgba(255,255,255,0.05)';ctx.lineWidth=1;
-  const S=80,R=1500;
-  const bx=Math.round(CAM.x/S)*S, by=Math.round(CAM.y/S)*S;
-  ctx.beginPath();
-  for(let i=-R;i<=R;i+=S){
-    let a=w2s(bx+i,by-R),b=w2s(bx+i,by+R);ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);
-    let c=w2s(bx-R,by+i),d=w2s(bx+R,by+i);ctx.moveTo(c[0],c[1]);ctx.lineTo(d[0],d[1]);
+  if(GRASS.pat){
+    // Tiled grass anchored to the world: scroll the pattern by the world-origin's
+    // screen position so the ground moves correctly under the iso camera.
+    const o=w2s(0,0),T=GRASS.tile;
+    const ox=((o[0]%T)+T)%T, oy=((o[1]%T)+T)%T;
+    ctx.save();
+    ctx.fillStyle=GRASS.pat;
+    ctx.translate(ox,oy);
+    ctx.fillRect(-ox-T,-oy-T,VW+T*2,VH+T*2);
+    ctx.restore();
+    ctx.fillStyle='rgba(8,12,16,0.20)';ctx.fillRect(0,0,VW,VH); // subtle darken for sprite contrast
+  } else {
+    ctx.fillStyle='#1f3318';ctx.fillRect(0,0,VW,VH);
   }
-  ctx.stroke();
 }
 function shadow(sx,sy,r){ctx.fillStyle='rgba(0,0,0,0.30)';ctx.beginPath();ctx.ellipse(sx,sy,r*1.05,r*0.5,0,0,Math.PI*2);ctx.fill();}
 function isoEllipse(wx,wy,rr,stroke,fill){
