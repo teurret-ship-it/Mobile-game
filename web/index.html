@@ -614,8 +614,12 @@ addEventListener('pointerdown',ensureAudio,{once:true});
 function refreshMenu(){
   $('menuStats').innerHTML=`🪙 Złoto: <b style="color:#ffd23f">${META.gold}</b> &nbsp;·&nbsp; 🌟 Rekord: <b>${META.best}</b>`;
 }
-function openForge(){G.prevState=G.state;G.state=St.Forge;buildForge();$('forgeOverlay').style.display='flex';}
-function closeForge(){$('forgeOverlay').style.display='none';G.state=(G.prevState===St.Over?St.Over:St.Menu);}
+function openForge(){G.prevState=G.state;G.state=St.Forge;
+  $('startOverlay').style.display='none';$('endOverlay').style.display='none';
+  buildForge();$('forgeOverlay').style.display='flex';}
+function closeForge(){$('forgeOverlay').style.display='none';
+  if(G.prevState===St.Over){G.state=St.Over;$('endOverlay').style.display='flex';}
+  else{G.state=St.Menu;$('startOverlay').style.display='flex';}}
 function buildForge(){
   $('forgeGold').innerHTML=`🪙 <b style="color:#ffd23f">${META.gold}</b>`;
   const grid=$('forgeGrid');grid.innerHTML='';
