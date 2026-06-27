@@ -43,8 +43,7 @@
   .abtn { position:absolute; border-radius:50%; display:flex; align-items:center; justify-content:center;
     font-weight:800; color:#fff; text-shadow:0 1px 2px #000; pointer-events:auto;
     border:2px solid rgba(255,255,255,.35); overflow:hidden; touch-action:none; }
-  .abtn .lbl { position:relative; z-index:2; font-size:17px; text-align:center; line-height:1; }
-  .abtn .lbl small { display:block; font-size:9px; opacity:.85; font-weight:600; }
+  .abtn .lbl { position:relative; z-index:2; font-size:13px; text-align:center; line-height:1; }
   .abtn .cd { position:absolute; inset:0; background:rgba(0,0,0,.62); transform-origin:bottom; transform:scaleY(0); z-index:1; }
   .abtn .cdnum { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; z-index:3; font-size:20px; font-weight:800; }
   .abtn.pressed { filter:brightness(1.35); }
@@ -54,12 +53,14 @@
   #btn3 { width:64px; height:64px; right:62px; bottom:134px; background:rgba(255,170,80,.62); }
   #btnUlt { width:86px; height:86px; right:4px; bottom:30px; background:rgba(255,80,80,.62); }
 
-  #build { position:absolute; left:14px; top:78px; display:flex; gap:8px; }
-  .bbtn { pointer-events:auto; background:rgba(0,0,0,.5); border:1px solid rgba(255,255,255,.25);
-    border-radius:8px; padding:5px 8px; font-size:12px; font-weight:700; text-shadow:0 1px 2px #000; touch-action:none; }
-  .bbtn b { color:#ffd23f; }
+  #build { position:absolute; right:16px; top:30%; display:flex; flex-direction:column; gap:10px; }
+  .bbtn { pointer-events:auto; width:58px; height:58px; border-radius:12px; background:rgba(0,0,0,.5);
+    border:1px solid rgba(255,255,255,.28); display:flex; flex-direction:column; align-items:center; justify-content:center;
+    font-weight:700; text-shadow:0 1px 2px #000; touch-action:none; }
+  .bbtn .bi { font-size:22px; line-height:1; }
+  .bbtn b { color:#ffd23f; font-size:11px; margin-top:2px; }
   .bbtn.cant { opacity:.4; }
-  .bbtn:active { filter:brightness(1.3); }
+  .bbtn.pressed, .bbtn:active { filter:brightness(1.35); }
 
   .overlay { position:fixed; inset:0; background:rgba(0,0,0,.82); display:none;
     flex-direction:column; align-items:center; justify-content:center; z-index:20; padding:20px; text-align:center; }
@@ -116,17 +117,17 @@
   <div id="banner"></div>
   <div id="bossWrap"><div id="bossName">Boss</div><div class="bar" id="bossBar"><div class="fill"></div></div></div>
   <div id="build">
-    <div class="bbtn" id="bTurret">🗼 Tower <b id="cTurret">40</b></div>
-    <div class="bbtn" id="bBarricade">🧱 Wall <b id="cBarricade">18</b></div>
+    <div class="bbtn" id="bTurret"><span class="bi">🗼</span><b id="cTurret">40</b></div>
+    <div class="bbtn" id="bBarricade"><span class="bi">🧱</span><b id="cBarricade">18</b></div>
   </div>
 </div>
 
 <div id="buttons">
   <div class="abtn" id="btnBasic"><span class="lbl">A</span><div class="cd"></div><div class="cdnum"></div></div>
-  <div class="abtn" id="btn1"><div class="cd"></div><div class="cdnum"></div></div>
-  <div class="abtn" id="btn2"><div class="cd"></div><div class="cdnum"></div></div>
-  <div class="abtn" id="btn3"><div class="cd"></div><div class="cdnum"></div></div>
-  <div class="abtn" id="btnUlt"><div class="cd"></div><div class="cdnum"></div></div>
+  <div class="abtn" id="btn1"><span class="lbl">Beam</span><div class="cd"></div><div class="cdnum"></div></div>
+  <div class="abtn" id="btn2"><span class="lbl">Frost</span><div class="cd"></div><div class="cdnum"></div></div>
+  <div class="abtn" id="btn3"><span class="lbl">Dash</span><div class="cd"></div><div class="cdnum"></div></div>
+  <div class="abtn" id="btnUlt"><span class="lbl">Ult</span><div class="cd"></div><div class="cdnum"></div></div>
 </div>
 
 <div class="overlay" id="startOverlay">
@@ -478,8 +479,9 @@ function runBehavior(e,p,d,spd,dt){
 }
 
 // ---------- Abilities (skillshots) ----------
-const aim={slot:-1,id:null,cx:0,cy:0,dx:0,dy:0,has:false};
-const AIMMAX=85, BASIC=99;   // BASIC is an aim "slot" sentinel for the manual basic attack
+const aim={slot:-1,id:null,cx:0,cy:0,dx:0,dy:0,has:false,build:null};
+const AIMMAX=85, BASIC=99, BUILD=100;   // sentinel aim "slots": manual basic attack / structure placement
+const BUILD_RANGE=300;
 function aimWorld(){const p=G.player;
   if(aim.has){const dir=screenDirToWorld(aim.dx,aim.dy);const frac=clamp(Math.hypot(aim.dx,aim.dy)/AIMMAX,0,1);return{dir,frac};}
   const tgt=nearest(p.x,p.y,1200);
@@ -514,16 +516,25 @@ function fireBasic(dir){
 
 // ---------- Base defence structures ----------
 function structCount(type){let n=0;for(const s of G.structures)if(s.type===type)n++;return n;}
-function buildStruct(type){
+function canBuild(type){const def=STRUCT[type];return structCount(type)<def.max&&G.gold>=def.cost(structCount(type));}
+function buildStruct(type,atX,atY){
   if(G.state!==St.Play)return;
   const def=STRUCT[type],count=structCount(type);
   if(count>=def.max)return;
   const cost=def.cost(count); if(G.gold<cost){addShake(2);return;}
   G.gold-=cost; sfx('buy');
-  const p=G.player, off=p.facing||{x:0,y:1};
-  G.structures.push({type,x:p.x+off.x*26,y:p.y+off.y*26,r:def.r,hp:def.hp,maxHp:def.hp,
+  const p=G.player;
+  const x=atX!==undefined?atX:p.x+p.facing.x*60, y=atY!==undefined?atY:p.y+p.facing.y*60;
+  G.structures.push({type,x,y,r:def.r,hp:def.hp,maxHp:def.hp,
     cd:0,range:def.range||0,fireCd:def.fireCd||0,dmg:def.dmg||0,color:def.color});
-  spawnBurst(p.x+off.x*26,p.y+off.y*26,def.color,12);
+  spawnBurst(x,y,def.color,12);
+}
+// Resolve the placement target from the current build-aim drag (or in front of the hero on a tap).
+function placeBuild(){
+  const p=G.player;let tx,ty;
+  if(aim.has){const dir=screenDirToWorld(aim.dx,aim.dy),frac=clamp(Math.hypot(aim.dx,aim.dy)/AIMMAX,0,1),dist=clamp(frac*BUILD_RANGE,30,BUILD_RANGE);tx=p.x+dir.x*dist;ty=p.y+dir.y*dist;}
+  else{tx=p.x+p.facing.x*70;ty=p.y+p.facing.y*70;}
+  buildStruct(aim.build,tx,ty);
 }
 
 // ---------- XP / Level ----------
@@ -600,7 +611,16 @@ function bindBasicAim(id){const el=$(id);
     if(aim.slot===BASIC){fireBasic(aim.has?screenDirToWorld(aim.dx,aim.dy):null);aim.slot=-1;aim.id=null;aim.has=false;}};
   el.addEventListener('pointerup',up);el.addEventListener('pointercancel',up);}
 bindBasicAim('btnBasic');bindSkill('btn1',0);bindSkill('btn2',1);bindSkill('btn3',2);bindSkill('btnUlt',3);
-function bindBuild(id,type){const el=$(id);el.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();ensureAudio();buildStruct(type);});}
+function bindBuild(id,type){const el=$(id);
+  el.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();ensureAudio();el.classList.add('pressed');
+    if(G.state!==St.Play)return;
+    if(!canBuild(type)){addShake(2);return;}
+    const r=el.getBoundingClientRect();aim.slot=BUILD;aim.build=type;aim.id=e.pointerId;aim.cx=r.left+r.width/2;aim.cy=r.top+r.height/2;aim.dx=aim.dy=0;aim.has=false;
+    try{el.setPointerCapture(e.pointerId);}catch(_){}});
+  el.addEventListener('pointermove',e=>{if(aim.slot!==BUILD||e.pointerId!==aim.id)return;
+    const dx=e.clientX-aim.cx,dy=e.clientY-aim.cy;if(Math.hypot(dx,dy)>10){aim.dx=dx;aim.dy=dy;aim.has=true;}});
+  const up=()=>{el.classList.remove('pressed');if(aim.slot===BUILD){placeBuild();aim.slot=-1;aim.id=null;aim.has=false;}};
+  el.addEventListener('pointerup',up);el.addEventListener('pointercancel',up);}
 bindBuild('bTurret','turret');bindBuild('bBarricade','barricade');
 
 const keys={};
@@ -858,6 +878,14 @@ function drawAim(){
     ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();
     ctx.fillStyle=ctx.strokeStyle;ctx.beginPath();ctx.arc(b[0],b[1],6,0,Math.PI*2);ctx.fill();return;
   }
+  if(aim.slot===BUILD){
+    const def=STRUCT[aim.build];
+    const dir=aim.has?screenDirToWorld(aim.dx,aim.dy):p.facing;
+    const dist=aim.has?clamp(clamp(Math.hypot(aim.dx,aim.dy)/AIMMAX,0,1)*BUILD_RANGE,30,BUILD_RANGE):70;
+    const tx=p.x+dir.x*dist,ty=p.y+dir.y*dist;
+    isoEllipse(p.x,p.y,BUILD_RANGE,'rgba(255,255,255,0.14)',null);
+    isoEllipse(tx,ty,def.r+4,'rgba(120,220,160,0.95)','rgba(120,220,160,0.20)');return;
+  }
   const ab=p.abil[aim.slot];
   const dir=aim.has?screenDirToWorld(aim.dx,aim.dy):p.facing;
   const frac=aim.has?clamp(Math.hypot(aim.dx,aim.dy)/AIMMAX,0,1):0.6;
@@ -893,8 +921,8 @@ function render(){
   for(const s of G.structures)units.push({_s:s,x:s.x,y:s.y});
   units.sort((a,b)=>(a.x+a.y)-(b.x+b.y));
   for(const u of units){if(u._p)drawPlayer();else if(u._s)drawStruct(u._s);else drawSprite(u);}
-  for(const pr of G.projectiles)drawFx(pr.sprite,pr.x,pr.y,pr.vx,pr.vy,(pr.r||7)*5.2,pr.color);
-  for(const q of G.eprojs)drawFx(q.spr,q.x,q.y,q.vx,q.vy,(q.r||8)*5,q.color);
+  for(const pr of G.projectiles)drawFx(pr.sprite,pr.x,pr.y,pr.vx,pr.vy,(pr.r||7)*2.6,pr.color);
+  for(const q of G.eprojs)drawFx(q.spr,q.x,q.y,q.vx,q.vy,(q.r||8)*2.5,q.color);
   for(const pt of G.parts){const[sx,sy]=w2s(pt.x,pt.y);ctx.globalAlpha=clamp(pt.life/pt.max,0,1);ctx.fillStyle=pt.color;
     ctx.beginPath();ctx.arc(sx,sy,pt.r,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;}
   ctx.textAlign='center';
