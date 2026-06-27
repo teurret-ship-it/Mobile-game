@@ -256,6 +256,7 @@ function loadSprite(id,ver){spritesTotal++;const im=new Image();
   im.onerror=()=>{spritesLoaded++;if(spritesLoaded>=spritesTotal)onAssetsReady();};
   im.src=`assets/monsters/${id}.png`+(ver?`?v=${ver}`:'');SPRITES[id]=im;}
 for(let i=1;i<=24;i++) loadSprite('n'+String(i).padStart(2,'0'));
+for(let i=1;i<=20;i++) loadSprite('f'+String(i).padStart(2,'0'));
 loadSprite('hero','3');
 function loadImg(key,url){spritesTotal++;const im=new Image();
   im.onload=()=>{spritesLoaded++;if(spritesLoaded>=spritesTotal)onAssetsReady();};
@@ -297,17 +298,27 @@ const MTYPES={
   beholder:{s:'n16',hp:88,dmg:11,spd:66,r:20,xp:6,h:74,name:'Beholder',b:'shooter',ba:{range:520,cd:2.0,burst:3,spread:0.25,pdmg:7,pspeed:280,color:'#c86bff',sprite:'fx_p05'}},
   demon:{s:'n11',hp:165,dmg:15,spd:92,r:24,xp:8,h:90,name:'Demon',b:'lobber',ba:{range:560,cd:2.5,r:82,dmg:15}},
   octopus:{s:'n22',hp:155,dmg:14,spd:66,r:24,xp:8,h:80,name:'Kraken',b:'shooter',ba:{range:480,cd:2.2,burst:5,spread:0.5,pdmg:6,pspeed:240,color:'#8a5bd0',sprite:'fx_p20'}},
+  mossgolem:{s:'f01',hp:170,dmg:13,spd:52,r:26,xp:7,h:92,name:'Moss Golem'},
+  lynx:{s:'f02',hp:20,dmg:6,spd:168,r:16,xp:1,h:60,name:'Forest Lynx'},
+  stag:{s:'f03',hp:70,dmg:12,spd:120,r:20,xp:4,h:84,name:'Forest Stag',b:'charger',ba:{range:470,cd:3.2,wind:0.5,dur:0.5,speed:650}},
+  druid:{s:'f04',hp:95,dmg:9,spd:70,r:20,xp:6,h:86,name:'Druid',b:'summoner',ba:{cd:6,key:'lynx',n:2}},
+  boar:{s:'f05',hp:85,dmg:14,spd:108,r:22,xp:5,h:74,name:'Mossback Boar',b:'charger',ba:{range:520,cd:3.0,wind:0.45,dur:0.55,speed:730}},
+  dryad:{s:'f09',hp:60,dmg:8,spd:80,r:17,xp:5,h:82,name:'Dryad',b:'shooter',ba:{range:470,cd:1.9,burst:2,spread:0.2,pdmg:7,pspeed:300,color:'#9be36b',sprite:'fx_p14'}},
+  flytrap:{s:'f10',hp:80,dmg:10,spd:48,r:20,xp:5,h:74,name:'Flytrap',b:'lobber',ba:{range:520,cd:2.4,r:78,dmg:13}},
+  archer:{s:'f17',hp:55,dmg:8,spd:74,r:17,xp:5,h:82,name:'Treant Archer',b:'shooter',ba:{range:600,cd:2.4,burst:1,pdmg:13,pspeed:430,color:'#caa14a',sprite:'fx_p16'}},
+  mossbear:{s:'f18',hp:150,dmg:15,spd:96,r:24,xp:6,h:82,name:'Moss Bear'},
+  autumn:{s:'f20',hp:80,dmg:9,spd:70,r:19,xp:6,h:86,name:'Autumn Treant',b:'puddle',ba:{every:1.6,r:70,dmg:5,dur:3,slow:0.3,color:'rgba(210,150,60,0.20)'}},
   dragon:{s:'n03',hp:2400,dmg:22,spd:72,r:46,xp:120,h:172,name:'Ancient Dragon',boss:true,b:'boss'},
 };
-const ELITE_POOL=['orc','zombie','owlbear','minotaur','wraith','beholder','demon','fire'];
+const ELITE_POOL=['orc','zombie','owlbear','minotaur','wraith','beholder','demon','fire','stag','boar','mossbear','mossgolem','druid','dryad'];
 const WAVES=[
-  {t:0,pool:['wolf','goblin'],rate:1.0,cap:18},
-  {t:40,pool:['wolf','goblin','spider','orc'],rate:1.6,cap:26},
-  {t:80,pool:['spider','orc','zombie','harpy'],rate:2.2,cap:34},
-  {t:120,pool:['zombie','slime','mushroom','fire','plant'],rate:2.6,cap:42},
-  {t:160,pool:['orc','fire','owlbear','wraith','mummy'],rate:2.8,cap:50},
-  {t:200,pool:['minotaur','stone','clay','beholder','harpy','wraith'],rate:3.0,cap:58},
-  {t:240,pool:['demon','octopus','ice','beholder','fire'],rate:2.4,cap:60},
+  {t:0,pool:['wolf','goblin','lynx'],rate:1.0,cap:18},
+  {t:40,pool:['wolf','goblin','spider','orc','lynx','stag'],rate:1.6,cap:26},
+  {t:80,pool:['spider','orc','zombie','harpy','dryad','boar'],rate:2.2,cap:34},
+  {t:120,pool:['zombie','slime','mushroom','fire','plant','flytrap','autumn','druid'],rate:2.6,cap:42},
+  {t:160,pool:['orc','fire','owlbear','wraith','mummy','mossbear','archer','stag'],rate:2.8,cap:50},
+  {t:200,pool:['minotaur','stone','clay','beholder','mossgolem','boar','dryad','autumn'],rate:3.0,cap:58},
+  {t:240,pool:['demon','octopus','ice','beholder','druid','archer','flytrap','mossbear','mossgolem'],rate:2.4,cap:62},
 ];
 
 // ---------- In-run upgrades ----------
