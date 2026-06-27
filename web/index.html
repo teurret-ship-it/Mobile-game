@@ -188,6 +188,7 @@ const $=id=>document.getElementById(id);
 // ---------- Isometric projection ----------
 const ZOOM=0.48, ISO_X=0.62*ZOOM, ISO_Y=0.34*ZOOM, SPR=ZOOM/0.72;
 const DASH_DUR=0.16, HERO_H=112, UNIT_SPEED=1.5;
+const HERO_CX=0.547;                        // hero sprite horizontal centroid -> keeps the figure dead-centre
 const ENEMY_SEP=460;                       // anti-overlap separation strength (0 = stacking allowed)
 const STRUCT={
   turret:{name:'Wieżyczka',ico:'🗼',cost:c=>40+c*25,hp:60,r:17,range:440,fireCd:0.9,dmg:14,max:10,color:'#7ec8ff'},
@@ -838,8 +839,8 @@ function drawPlayer(){
   const p=G.player,[sx,sy]=w2s(p.x,p.y);shadow(sx,sy,p.r*1.15*SPR);
   const img=SPRITES['hero'];
   if(img&&img.complete&&img.naturalWidth){const h=HERO_H*SPR,w=h*(img.naturalWidth/img.naturalHeight);
-    ctx.save();ctx.translate(sx,sy+5);ctx.scale(p.face,1);ctx.drawImage(img,-w/2,-h,w,h);
-    if(p.iframe>0){ctx.globalCompositeOperation='lighter';ctx.globalAlpha=Math.min(0.55,p.iframe*3);ctx.drawImage(img,-w/2,-h,w,h);ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';}
+    ctx.save();ctx.translate(sx,sy+5);ctx.scale(p.face,1);ctx.drawImage(img,-w*HERO_CX,-h,w,h);
+    if(p.iframe>0){ctx.globalCompositeOperation='lighter';ctx.globalAlpha=Math.min(0.55,p.iframe*3);ctx.drawImage(img,-w*HERO_CX,-h,w,h);ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';}
     ctx.restore();}
   else{ctx.fillStyle=p.iframe>0?'#bfe9ff':'#2e86de';ctx.beginPath();ctx.arc(sx,sy-p.r,p.r,0,Math.PI*2);ctx.fill();}
 }
