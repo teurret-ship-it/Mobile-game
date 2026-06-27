@@ -1,0 +1,50 @@
+name: Android Build (APK)
+
+# Builds an installable test APK in the cloud using GameCI — no local Unity needed.
+# Requires a one-time UNITY_LICENSE repository secret (see docs/ANDROID_BUILD.md).
+
+on:
+  workflow_dispatch: {}        # run manually from the Actions tab
+  push:
+    branches:
+      - claude/wykonaj-4vkjg4
+    paths:
+      - 'Assets/**'
+      - 'Packages/**'
+      - 'ProjectSettings/**'
+      - '.github/workflows/android-build.yml'
+
+jobs:
+  build-android:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Cache Unity Library
+        uses: actions/cache@v4
+        with:
+          path: Library
+          key: Library-Android-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+          restore-keys: |
+            Library-Android-
+
+      - name: Build with Unity (GameCI)
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+        with:
+          unityVersion: 2022.3.62f1
+          targetPlatform: Android
+          buildMethod: SurvivalMoba.EditorTools.AndroidBuilder.PerformBuild
+          allowDirtyBuild: true
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ArcaneSurvivors-APK
+          path: Builds/Android/*.apk
+          if-no-files-found: error
