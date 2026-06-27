@@ -126,6 +126,7 @@ const ISO_X=0.62*ZOOM, ISO_Y=0.34*ZOOM;   // 2:1-ish tilt
 const SPR=ZOOM/0.72;                       // scale sprites/shadows with the zoom (1.0 = prior look)
 const DASH_DUR=0.16;                       // dash travel time (smooth glide, not a teleport)
 const HERO_H=112;                          // hero sprite draw height (px)
+const UNIT_SPEED=1.5;                       // global movement-speed multiplier (hero + enemies)
 const RT={x:Math.SQRT1_2,y:-Math.SQRT1_2}; // world dir for "screen right"
 const DN={x:Math.SQRT1_2,y:Math.SQRT1_2}; // world dir for "screen down"
 function w2s(wx,wy){
@@ -228,7 +229,7 @@ function makePlayer(){return{
   level:1,xp:0,xpNeed:4,
   abil:[{k:'beam',cd:0,max:5,range:340},{k:'frost',cd:0,max:8,range:260},{k:'dash',cd:0,max:10,range:190},{k:'ult',cd:0,max:45,range:240}],
 };}
-const pSpeed=p=>p.baseSpeed*(1+p.moveBonus);
+const pSpeed=p=>p.baseSpeed*(1+p.moveBonus)*UNIT_SPEED;
 const aMul=p=>1+p.abilityDmg;
 const basicDmg=p=>p.baseDamage*(1+p.abilityDmg);
 const basicInt=p=>p.attackInterval/(1+p.attackSpeed);
@@ -434,7 +435,7 @@ function update(dt){
   tryBasic(false);
 
   for(const e of G.enemies){ if(e.dead)continue;
-    let spd=e.spd; if(e.slowT>0){e.slowT-=dt;spd*=(1-e.slowF);} if(e.flash>0)e.flash-=dt;
+    let spd=e.spd*UNIT_SPEED; if(e.slowT>0){e.slowT-=dt;spd*=(1-e.slowF);} if(e.flash>0)e.flash-=dt;
     const dx=p.x-e.x,dy=p.y-e.y,d=Math.hypot(dx,dy)||1;
     if(d>e.r+p.r-2){e.x+=dx/d*spd*dt;e.y+=dy/d*spd*dt;e.face=(w2s(p.x,p.y)[0]>=w2s(e.x,e.y)[0])?1:-1;}
     if(e.atkCd>0)e.atkCd-=dt;
