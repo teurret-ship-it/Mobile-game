@@ -1,0 +1,47 @@
+name: Deploy Web (GitHub Pages)
+
+# Publishes the browser game in web/ to GitHub Pages so it can be played on a
+# phone via a link. Requires Pages to be available for the repo (public repo on
+# the free plan), with the Pages source set to "GitHub Actions".
+
+on:
+  push:
+    branches:
+      - claude/wykonaj-4vkjg4
+    paths:
+      - 'web/**'
+      - '.github/workflows/deploy-web.yml'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: Upload web artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: web
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
