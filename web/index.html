@@ -18,25 +18,25 @@
   #hud { position:fixed; inset:0; pointer-events:none; z-index:6; }
   .bar { position:absolute; background:rgba(0,0,0,0.45); border-radius:6px; overflow:hidden; }
   .bar > .fill { height:100%; width:100%; transform-origin:left; transition:transform .08s linear; }
-  #healthBar { left:14px; top:12px; width:40vw; max-width:360px; height:22px; }
+  #healthBar { left:12px; top:8px; width:22vw; max-width:190px; height:10px; }
   #healthBar .fill { background:linear-gradient(90deg,#ff4d4d,#c0392b); }
-  #healthText { position:absolute; left:14px; top:12px; width:40vw; max-width:360px; height:22px;
-    font-size:13px; line-height:22px; text-align:center; text-shadow:0 1px 2px #000; }
-  #xpBar { left:14px; top:40px; width:40vw; max-width:360px; height:10px; }
+  #healthText { position:absolute; left:12px; top:8px; width:22vw; max-width:190px; height:10px;
+    font-size:8px; line-height:10px; text-align:center; text-shadow:0 1px 2px #000; }
+  #xpBar { left:12px; top:19px; width:22vw; max-width:190px; height:4px; }
   #xpBar .fill { background:linear-gradient(90deg,#54a0ff,#2e86de); transform:scaleX(0); }
-  #levelText { position:absolute; left:14px; top:56px; font-size:14px; font-weight:700; text-shadow:0 1px 2px #000; }
-  #timerText { position:absolute; top:12px; left:50%; transform:translateX(-50%);
-    font-size:26px; font-weight:800; text-shadow:0 2px 4px #000; letter-spacing:1px; }
-  #goldHud { position:absolute; right:14px; top:12px; font-size:18px; font-weight:800; color:#ffd23f; text-shadow:0 1px 2px #000; }
-  #muteBtn { position:absolute; right:14px; top:42px; font-size:18px; pointer-events:auto; cursor:pointer; opacity:.85; }
-  #comboHud { position:absolute; top:46px; left:50%; transform:translateX(-50%);
-    font-weight:900; color:#ffb340; text-shadow:0 2px 4px #000; opacity:0; transition:opacity .12s; white-space:nowrap; }
-  #banner { position:absolute; top:30%; left:50%; transform:translate(-50%,-50%);
-    font-size:42px; font-weight:900; text-align:center; text-shadow:0 3px 8px #000; opacity:0; white-space:nowrap;
-    color:#fff; letter-spacing:1px; }
-  #bossWrap { position:absolute; top:78px; left:50%; transform:translateX(-50%); width:74vw; max-width:680px; display:none; }
-  #bossName { font-size:12px; text-align:center; margin-bottom:3px; text-shadow:0 1px 2px #000; color:#ff8a8a; font-weight:700; letter-spacing:.5px; }
-  #bossBar { position:relative; width:100%; height:14px; }
+  #levelText { position:absolute; left:12px; top:25px; font-size:10px; font-weight:700; text-shadow:0 1px 2px #000; }
+  #timerText { position:absolute; top:6px; left:50%; transform:translateX(-50%);
+    font-size:15px; font-weight:800; text-shadow:0 2px 4px #000; letter-spacing:.5px; }
+  #goldHud { position:absolute; right:12px; top:8px; font-size:12px; font-weight:800; color:#ffd23f; text-shadow:0 1px 2px #000; }
+  #muteBtn { position:absolute; right:12px; top:24px; font-size:14px; pointer-events:auto; cursor:pointer; opacity:.85; }
+  #comboHud { position:absolute; top:38px; left:12px; font-weight:800; color:#ffb340;
+    text-shadow:0 2px 4px #000; opacity:0; transition:opacity .12s; white-space:nowrap; }
+  #banner { position:absolute; top:24%; left:50%; transform:translate(-50%,-50%);
+    font-size:19px; font-weight:800; text-align:center; text-shadow:0 2px 6px #000; opacity:0; white-space:nowrap;
+    color:#fff; letter-spacing:.5px; }
+  #bossWrap { position:absolute; top:24px; left:50%; transform:translateX(-50%); width:48vw; max-width:360px; display:none; }
+  #bossName { font-size:9px; text-align:center; margin-bottom:2px; text-shadow:0 1px 2px #000; color:#ff8a8a; font-weight:700; letter-spacing:.5px; }
+  #bossBar { position:relative; width:100%; height:8px; }
   #bossBar .fill { background:linear-gradient(90deg,#ff5e57,#b71540); }
 
   #buttons { position:fixed; right:16px; bottom:18px; pointer-events:none; z-index:6; }
@@ -92,7 +92,7 @@
   .mitem .mc { font-size:13px; font-weight:800; color:#ffd23f; }
   .mitem .pips { font-size:11px; letter-spacing:2px; color:#6cf; }
 
-  #fsHud { position:absolute; right:14px; top:70px; font-size:18px; pointer-events:auto; cursor:pointer; opacity:.85; }
+  #fsHud { position:absolute; right:12px; top:42px; font-size:14px; pointer-events:auto; cursor:pointer; opacity:.85; }
   #rotate { position:fixed; inset:0; background:#0b0d12; z-index:50; display:none;
     flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:30px; }
   #rotate .ic { font-size:64px; animation:rothint 1.8s ease-in-out infinite; transform-origin:center; }
@@ -197,7 +197,7 @@ const STRUCT={
 };
 const RT={x:Math.SQRT1_2,y:-Math.SQRT1_2}, DN={x:Math.SQRT1_2,y:Math.SQRT1_2};
 const CAM={x:0,y:0};
-function w2s(wx,wy){const dx=wx-CAM.x,dy=wy-CAM.y;return[VW/2+(dx-dy)*ISO_X,VH*0.46+(dx+dy)*ISO_Y];}
+function w2s(wx,wy){const dx=wx-CAM.x,dy=wy-CAM.y;return[VW/2+(dx-dy)*ISO_X,VH*0.57+(dx+dy)*ISO_Y];}
 function screenDirToWorld(sx,sy){let x=RT.x*sx+DN.x*sy,y=RT.y*sx+DN.y*sy;const m=Math.hypot(x,y)||1;return{x:x/m,y:y/m};}
 
 // ---------- Meta progression (localStorage) ----------
@@ -949,7 +949,7 @@ function hud(){
   elTm.textContent=(G.time>=G.dur)?'⚔ BOSS':fmtTime(G.dur-G.time);
   elGold.textContent='🪙 '+G.gold;
   if(G.combo>=3){elCombo.style.opacity='1';const cm=Math.round(Math.min(G.combo,50)*0.04*100);elCombo.textContent='x'+G.combo+' COMBO  (+'+cm+'%)';
-    elCombo.style.fontSize=(16+Math.min(G.combo,30)*0.5)+'px';}
+    elCombo.style.fontSize=(11+Math.min(G.combo,30)*0.25)+'px';}
   else elCombo.style.opacity='0';
   if(G.bannerT>0){elBanner.style.opacity=clamp(G.bannerT,0,1);elBanner.textContent=G.banner;}
   else elBanner.style.opacity='0';
