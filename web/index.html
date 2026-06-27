@@ -306,7 +306,6 @@ const WAVES=[
   {t:160,pool:['orc','fire','owlbear','wraith','mummy'],rate:2.8,cap:50},
   {t:200,pool:['minotaur','stone','clay','beholder','harpy','wraith'],rate:3.0,cap:58},
   {t:240,pool:['demon','octopus','ice','beholder','fire'],rate:2.4,cap:60},
-  {t:262,boss:'dragon'},
 ];
 
 // ---------- In-run upgrades ----------
@@ -670,7 +669,7 @@ function start(){
   const sl=metaVal('start');if(sl>0){p.level=1+sl;G.pending=sl;openLevel();}
 }
 $('startBtn').onclick=start;$('restartBtn').onclick=start;
-function onAssetsReady(){$('startSub').textContent='Przetrwaj 5 minut albo pokonaj Pradawnego Smoka.';
+function onAssetsReady(){$('startSub').textContent='Przetrwaj 5 minut — wtedy nadejdzie Pradawny Smok. Pokonaj go, aby wygrać.';
   $('startBtn').style.display='';$('forgeBtn').style.display='';refreshMenu();}
 
 // ---------- Update ----------
@@ -683,14 +682,13 @@ function update(dt){
   if(G.shakeT>0)G.shakeT-=dt;
   if(p.slowT>0)p.slowT-=dt;
   if(p.regen>0)p.hp=Math.min(p.maxHp,p.hp+p.regen*dt);
-  if(G.time>=G.dur){over(true);return;}
-
   while(waveIdx+1<WAVES.length&&G.time>=WAVES[waveIdx+1].t){waveIdx++;curWave=WAVES[waveIdx];}
-  if(curWave.boss){if(!bossSpawned){bossSpawned=true;spawnEnemy(curWave.boss);}}
-  else{spawnAcc+=curWave.rate*dt;
-    while(spawnAcc>=1&&G.enemies.length<curWave.cap){spawnAcc-=1;spawnEnemy(curWave.pool[(Math.random()*curWave.pool.length)|0]);}
-    if(spawnAcc>3)spawnAcc=3;
-    G.eliteT-=dt;if(G.eliteT<=0){G.eliteT=rand(18,26);spawnEnemy(ELITE_POOL[(Math.random()*ELITE_POOL.length)|0],true);banner('☠ ELITA!',1.0);}}
+  spawnAcc+=curWave.rate*dt;
+  while(spawnAcc>=1&&G.enemies.length<curWave.cap){spawnAcc-=1;spawnEnemy(curWave.pool[(Math.random()*curWave.pool.length)|0]);}
+  if(spawnAcc>3)spawnAcc=3;
+  G.eliteT-=dt;if(G.eliteT<=0){G.eliteT=rand(18,26);spawnEnemy(ELITE_POOL[(Math.random()*ELITE_POOL.length)|0],true);banner('☠ ELITA!',1.0);}
+  // Final boss appears once the clock runs out; victory is granted only on its defeat.
+  if(G.time>=G.dur&&!bossSpawned){bossSpawned=true;spawnEnemy('dragon');}
 
   const cm=1+Math.min(G.combo,50)*0.04;
 
@@ -915,7 +913,7 @@ function hud(){
   elHPT.textContent=`${Math.ceil(p.hp)} / ${Math.ceil(p.maxHp)}`;
   elXP.style.transform=`scaleX(${clamp(p.xp/p.xpNeed,0,1)})`;
   elLv.textContent='Lv '+p.level+(p.revives>0?'  🔥'+p.revives:'');
-  elTm.textContent=fmtTime(G.dur-G.time);
+  elTm.textContent=(G.time>=G.dur)?'⚔ BOSS':fmtTime(G.dur-G.time);
   elGold.textContent='🪙 '+G.gold;
   if(G.combo>=3){elCombo.style.opacity='1';const cm=Math.round(Math.min(G.combo,50)*0.04*100);elCombo.textContent='x'+G.combo+' COMBO  (+'+cm+'%)';
     elCombo.style.fontSize=(16+Math.min(G.combo,30)*0.5)+'px';}
