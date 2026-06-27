@@ -121,7 +121,9 @@ const dist2=(ax,ay,bx,by)=>{const dx=ax-bx,dy=ay-by;return dx*dx+dy*dy;};
 const fmtTime=s=>{s=Math.max(0,Math.ceil(s));const m=(s/60)|0,ss=s%60;return(m<10?'0':'')+m+':'+(ss<10?'0':'')+ss;};
 
 // ---------- Isometric projection ----------
-const ISO_X=0.62, ISO_Y=0.34;            // 2:1-ish tilt
+const ZOOM=0.72;                          // <1 = camera further out (wider field of view)
+const ISO_X=0.62*ZOOM, ISO_Y=0.34*ZOOM;   // 2:1-ish tilt
+const DASH_DUR=0.16;                       // dash travel time (smooth glide, not a teleport)
 const RT={x:Math.SQRT1_2,y:-Math.SQRT1_2}; // world dir for "screen right"
 const DN={x:Math.SQRT1_2,y:Math.SQRT1_2}; // world dir for "screen down"
 function w2s(wx,wy){
@@ -207,6 +209,7 @@ function makePlayer(){return{
   baseDamage:10,abilityDmg:0,attackSpeed:0,cdr:0,
   attackRange:300,attackCd:0,attackInterval:0.8,projSpeed:520,projectiles:1,pierce:0,
   frostRadius:0,dashCdr:0,ultCdr:0,iframe:0,facing:{x:0,y:1},face:1,
+  dashT:0,dashVX:0,dashVY:0,dashDmg:0,dashHit:null,
   level:1,xp:0,xpNeed:4,
   abil:[{k:'beam',cd:0,max:5,range:340},{k:'frost',cd:0,max:8,range:260},{k:'dash',cd:0,max:10,range:190},{k:'ult',cd:0,max:45,range:240}],
 };}
@@ -219,7 +222,7 @@ function abCd(p,i){let c=p.cdr; if(i===2)c+=p.dashCdr; if(i===3)c+=p.ultCdr; ret
 // ---------- Spawning ----------
 function spawnEnemy(key){
   const t=MTYPES[key], p=G.player;
-  const ang=Math.random()*Math.PI*2, d=Math.max(VW,VH)*0.95+rand(80,260);
+  const ang=Math.random()*Math.PI*2, d=Math.max(VW,VH)*0.95/ZOOM+rand(80,260);
   const e={key,name:t.name,sprite:t.s,x:p.x+Math.cos(ang)*d,y:p.y+Math.sin(ang)*d,
     r:t.r,hp:t.hp,maxHp:t.hp,dmg:t.dmg,spd:t.spd,xp:t.xp,h:t.h,boss:!!t.boss,
     atkCd:0,slowT:0,slowF:0,flash:0,face:1,dead:false};
@@ -272,12 +275,10 @@ function castSkill(slot){
     const dist=clamp(frac*ab.range,60,ab.range);
     G.zones.push({x:p.x+dir.x*dist,y:p.y+dir.y*dist,r:110*(1+p.frostRadius),life:4,tick:0,dmg:10*aMul(p),slowF:0.45,color:'rgba(90,180,255,0.20)'});
   } else if(ab.k==='dash'){
-    const sx=p.x,sy=p.y; p.x+=dir.x*ab.range; p.y+=dir.y*ab.range; p.iframe=0.25;
-    for(const e of G.enemies){ if(e.dead)continue;
-      const t=clamp(((e.x-sx)*(p.x-sx)+(e.y-sy)*(p.y-sy))/(dist2(sx,sy,p.x,p.y)||1),0,1);
-      const cx=sx+(p.x-sx)*t, cy=sy+(p.y-sy)*t;
-      if(dist2(e.x,e.y,cx,cy)<(e.r+46)*(e.r+46)) hurt(e,22*aMul(p));
-    }
+    // Smooth glide: set a dash velocity and let update() move the player over DASH_DUR,
+    // damaging enemies it sweeps through (handled in the movement step).
+    p.dashT=DASH_DUR; p.dashVX=dir.x*ab.range/DASH_DUR; p.dashVY=dir.y*ab.range/DASH_DUR;
+    p.dashDmg=22*aMul(p); p.dashHit=new Set(); p.iframe=DASH_DUR+0.08;
   } else if(ab.k==='ult'){
     const dist=clamp(frac*ab.range,0,ab.range);
     const tx=p.x+dir.x*dist, ty=p.y+dir.y*dist;
@@ -398,12 +399,19 @@ function update(dt){
     if(spawnAcc>3)spawnAcc=3; }
 
   // movement (iso-aligned)
-  let mx=joy.active?joy.dx:0,my=joy.active?joy.dy:0;
-  if(keys['a']||keys['arrowleft'])mx-=1;if(keys['d']||keys['arrowright'])mx+=1;
-  if(keys['w']||keys['arrowup'])my-=1;if(keys['s']||keys['arrowdown'])my+=1;
-  const mm=Math.hypot(mx,my);
-  if(mm>0.01){const wdir=screenDirToWorld(mx,my);const sp=pSpeed(p)*Math.min(1,mm);
-    p.x+=wdir.x*sp*dt;p.y+=wdir.y*sp*dt;p.facing=wdir;p.face=(mx>=0?1:-1);}
+  if(p.dashT>0){
+    // Smooth dash glide, sweeping damage as we pass enemies.
+    p.dashT-=dt; p.x+=p.dashVX*dt; p.y+=p.dashVY*dt;
+    for(const e of G.enemies){ if(e.dead||p.dashHit.has(e))continue;
+      if(dist2(e.x,e.y,p.x,p.y)<(e.r+44)*(e.r+44)){hurt(e,p.dashDmg);p.dashHit.add(e);} }
+  } else {
+    let mx=joy.active?joy.dx:0,my=joy.active?joy.dy:0;
+    if(keys['a']||keys['arrowleft'])mx-=1;if(keys['d']||keys['arrowright'])mx+=1;
+    if(keys['w']||keys['arrowup'])my-=1;if(keys['s']||keys['arrowdown'])my+=1;
+    const mm=Math.hypot(mx,my);
+    if(mm>0.01){const wdir=screenDirToWorld(mx,my);const sp=pSpeed(p)*Math.min(1,mm);
+      p.x+=wdir.x*sp*dt;p.y+=wdir.y*sp*dt;p.facing=wdir;p.face=(mx>=0?1:-1);}
+  }
   CAM.x=p.x;CAM.y=p.y;
 
   if(p.attackCd>0)p.attackCd-=dt;if(p.iframe>0)p.iframe-=dt;
