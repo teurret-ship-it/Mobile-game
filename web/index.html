@@ -124,6 +124,7 @@ const fmtTime=s=>{s=Math.max(0,Math.ceil(s));const m=(s/60)|0,ss=s%60;return(m<1
 const ZOOM=0.72;                          // <1 = camera further out (wider field of view)
 const ISO_X=0.62*ZOOM, ISO_Y=0.34*ZOOM;   // 2:1-ish tilt
 const DASH_DUR=0.16;                       // dash travel time (smooth glide, not a teleport)
+const HERO_H=112;                          // hero sprite draw height (px)
 const RT={x:Math.SQRT1_2,y:-Math.SQRT1_2}; // world dir for "screen right"
 const DN={x:Math.SQRT1_2,y:Math.SQRT1_2}; // world dir for "screen down"
 function w2s(wx,wy){
@@ -147,6 +148,7 @@ function loadSprite(id){
   SPRITES[id]=im;
 }
 for(let i=1;i<=21;i++) loadSprite('m'+String(i).padStart(2,'0'));
+loadSprite('hero');
 
 // ---------- Monster roster (from the spritesheet) ----------
 const MTYPES={
@@ -485,13 +487,19 @@ function drawSprite(e){
   } else { shadow(sx,sy,e.r); ctx.fillStyle='#d65a5a';ctx.beginPath();ctx.arc(sx,sy-e.r,e.r,0,Math.PI*2);ctx.fill(); }
 }
 function drawPlayer(){
-  const p=G.player,[sx,sy]=w2s(p.x,p.y);shadow(sx,sy,p.r);
-  // simple robed mage
-  ctx.fillStyle=p.iframe>0?'#bfe9ff':'#2e86de';
-  ctx.beginPath();ctx.moveTo(sx,sy-p.r*2.4);ctx.lineTo(sx-p.r,sy);ctx.lineTo(sx+p.r,sy);ctx.closePath();ctx.fill();
-  ctx.fillStyle='#ffe0b5';ctx.beginPath();ctx.arc(sx,sy-p.r*2.5,p.r*0.62,0,Math.PI*2);ctx.fill();
-  ctx.strokeStyle='#fff';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(sx,sy-p.r);
-  ctx.lineTo(sx+p.facing.x*p.r*1.6,sy-p.r+p.facing.y*p.r*1.0);ctx.stroke();
+  const p=G.player,[sx,sy]=w2s(p.x,p.y);shadow(sx,sy,p.r*1.15);
+  const img=SPRITES['hero'];
+  if(img&&img.complete&&img.naturalWidth){
+    const h=HERO_H, w=h*(img.naturalWidth/img.naturalHeight);
+    ctx.save();ctx.translate(sx,sy+5);ctx.scale(p.face,1);
+    ctx.drawImage(img,-w/2,-h,w,h);
+    if(p.iframe>0){ // dash shimmer
+      ctx.globalCompositeOperation='lighter';ctx.globalAlpha=Math.min(0.55,p.iframe*3);
+      ctx.drawImage(img,-w/2,-h,w,h);ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';}
+    ctx.restore();
+  } else {
+    ctx.fillStyle=p.iframe>0?'#bfe9ff':'#2e86de';ctx.beginPath();ctx.arc(sx,sy-p.r,p.r,0,Math.PI*2);ctx.fill();
+  }
 }
 function drawAim(){
   if(aim.slot<0||G.state!==St.Play)return;
