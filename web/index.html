@@ -139,16 +139,16 @@ const CAM={x:0,y:0};
 
 // ---------- Sprites ----------
 const SPRITES={}; let spritesLoaded=0, spritesTotal=0;
-function loadSprite(id){
+function loadSprite(id,ver){
   spritesTotal++;
   const im=new Image();
   im.onload=()=>{ spritesLoaded++; if(spritesLoaded>=spritesTotal) onAssetsReady(); };
   im.onerror=()=>{ spritesLoaded++; if(spritesLoaded>=spritesTotal) onAssetsReady(); };
-  im.src=`assets/monsters/${id}.png`;
+  im.src=`assets/monsters/${id}.png`+(ver?`?v=${ver}`:'');
   SPRITES[id]=im;
 }
 for(let i=1;i<=21;i++) loadSprite('m'+String(i).padStart(2,'0'));
-loadSprite('hero');
+loadSprite('hero','3');   // bump version to bust the browser/CDN cache after art changes
 
 // ---------- Monster roster (from the spritesheet) ----------
 const MTYPES={
