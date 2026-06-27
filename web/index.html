@@ -257,6 +257,7 @@ function loadSprite(id,ver){spritesTotal++;const im=new Image();
   im.src=`assets/monsters/${id}.png`+(ver?`?v=${ver}`:'');SPRITES[id]=im;}
 for(let i=1;i<=24;i++) loadSprite('n'+String(i).padStart(2,'0'));
 for(let i=1;i<=20;i++) loadSprite('f'+String(i).padStart(2,'0'));
+for(let i=1;i<=25;i++) loadSprite('d'+String(i).padStart(2,'0'));
 loadSprite('hero','3');
 function loadImg(key,url){spritesTotal++;const im=new Image();
   im.onload=()=>{spritesLoaded++;if(spritesLoaded>=spritesTotal)onAssetsReady();};
@@ -308,17 +309,29 @@ const MTYPES={
   archer:{s:'f17',hp:55,dmg:8,spd:74,r:17,xp:5,h:82,name:'Treant Archer',b:'shooter',ba:{range:600,cd:2.4,burst:1,pdmg:13,pspeed:430,color:'#caa14a',sprite:'fx_p16'}},
   mossbear:{s:'f18',hp:150,dmg:15,spd:96,r:24,xp:6,h:82,name:'Moss Bear'},
   autumn:{s:'f20',hp:80,dmg:9,spd:70,r:19,xp:6,h:86,name:'Autumn Treant',b:'puddle',ba:{every:1.6,r:70,dmg:5,dur:3,slow:0.3,color:'rgba(210,150,60,0.20)'}},
+  cyclops:{s:'d03',hp:115,dmg:14,spd:80,r:24,xp:6,h:88,name:'Cyclops',b:'charger',ba:{range:480,cd:3.4,wind:0.6,dur:0.55,speed:680}},
+  bonedragon:{s:'d05',hp:230,dmg:14,spd:70,r:26,xp:10,h:100,name:'Bone Dragon',b:'shooter',ba:{range:560,cd:1.9,burst:3,spread:0.18,pdmg:9,pspeed:340,color:'#bfe9ff',sprite:'fx_p10'}},
+  salamander:{s:'d06',hp:46,dmg:9,spd:120,r:17,xp:4,h:66,name:'Salamander',b:'puddle',ba:{every:0.8,r:54,dmg:7,dur:2.4,slow:0,color:'rgba(255,120,30,0.22)'}},
+  plaguebeast:{s:'d08',hp:135,dmg:11,spd:62,r:24,xp:7,h:80,name:'Plague Beast',b:'puddle',ba:{every:1.4,r:74,dmg:6,dur:3.2,slow:0.2,color:'rgba(150,200,70,0.20)',nova:{r:100,dmg:13}}},
+  bonetreant:{s:'d10',hp:120,dmg:10,spd:60,r:22,xp:7,h:92,name:'Bone Treant',b:'summoner',ba:{cd:5.5,key:'zombie',n:2}},
+  hydra:{s:'d11',hp:185,dmg:13,spd:56,r:26,xp:8,h:92,name:'Hydra',b:'shooter',ba:{range:500,cd:2.0,burst:3,spread:0.5,pdmg:8,pspeed:260,color:'#6ad0a0',sprite:'fx_p08'}},
+  shadowcaster:{s:'d14',hp:95,dmg:12,spd:70,r:20,xp:7,h:88,name:'Shadow Caster',b:'lobber',ba:{range:560,cd:2.4,r:80,dmg:15}},
+  deathrider:{s:'d17',hp:105,dmg:15,spd:140,r:22,xp:7,h:90,name:'Death Rider',b:'charger',ba:{range:520,cd:2.8,wind:0.4,dur:0.5,speed:770}},
+  mawbeast:{s:'d18',hp:150,dmg:16,spd:92,r:24,xp:7,h:80,name:'Maw Beast',b:'charger',ba:{range:420,cd:3.0,wind:0.45,dur:0.45,speed:650}},
+  chainspectre:{s:'d20',hp:80,dmg:11,spd:95,r:19,xp:6,h:86,name:'Chained Spectre',b:'shooter',ba:{range:520,cd:2.0,burst:1,pdmg:9,pspeed:300,color:'#7fe0a0',sprite:'fx_p12'}},
+  berserker:{s:'d23',hp:72,dmg:13,spd:130,r:19,xp:5,h:80,name:'Berserker',b:'charger',ba:{range:360,cd:2.6,wind:0.35,dur:0.4,speed:620}},
+  brainhorror:{s:'d25',hp:110,dmg:12,spd:54,r:22,xp:7,h:74,name:'Brain Horror',b:'shooter',ba:{range:540,cd:2.2,burst:5,spread:0.6,pdmg:7,pspeed:230,color:'#ff8ab0',sprite:'fx_p03'}},
   dragon:{s:'n03',hp:2400,dmg:22,spd:72,r:46,xp:120,h:172,name:'Ancient Dragon',boss:true,b:'boss'},
 };
-const ELITE_POOL=['orc','zombie','owlbear','minotaur','wraith','beholder','demon','fire','stag','boar','mossbear','mossgolem','druid','dryad'];
+const ELITE_POOL=['orc','zombie','owlbear','minotaur','wraith','beholder','demon','fire','stag','boar','mossbear','mossgolem','druid','dryad','cyclops','mawbeast','deathrider','plaguebeast','hydra','brainhorror','bonetreant','berserker'];
 const WAVES=[
   {t:0,pool:['wolf','goblin','lynx'],rate:1.0,cap:18},
   {t:40,pool:['wolf','goblin','spider','orc','lynx','stag'],rate:1.6,cap:26},
   {t:80,pool:['spider','orc','zombie','harpy','dryad','boar'],rate:2.2,cap:34},
-  {t:120,pool:['zombie','slime','mushroom','fire','plant','flytrap','autumn','druid'],rate:2.6,cap:42},
-  {t:160,pool:['orc','fire','owlbear','wraith','mummy','mossbear','archer','stag'],rate:2.8,cap:50},
-  {t:200,pool:['minotaur','stone','clay','beholder','mossgolem','boar','dryad','autumn'],rate:3.0,cap:58},
-  {t:240,pool:['demon','octopus','ice','beholder','druid','archer','flytrap','mossbear','mossgolem'],rate:2.4,cap:62},
+  {t:120,pool:['zombie','slime','mushroom','fire','plant','flytrap','autumn','druid','salamander'],rate:2.6,cap:42},
+  {t:160,pool:['orc','fire','owlbear','wraith','mummy','mossbear','archer','stag','salamander','berserker','plaguebeast'],rate:2.8,cap:50},
+  {t:200,pool:['minotaur','stone','clay','beholder','mossgolem','boar','dryad','autumn','cyclops','shadowcaster','deathrider','mawbeast','bonetreant'],rate:3.0,cap:58},
+  {t:240,pool:['demon','octopus','ice','beholder','druid','archer','flytrap','mossbear','mossgolem','hydra','bonedragon','brainhorror','chainspectre','deathrider','cyclops'],rate:2.4,cap:70},
 ];
 
 // ---------- In-run upgrades ----------
