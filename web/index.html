@@ -258,6 +258,7 @@ function loadSprite(id,ver){spritesTotal++;const im=new Image();
 for(let i=1;i<=24;i++) loadSprite('n'+String(i).padStart(2,'0'));
 for(let i=1;i<=20;i++) loadSprite('f'+String(i).padStart(2,'0'));
 for(let i=1;i<=25;i++) loadSprite('d'+String(i).padStart(2,'0'));
+for(let i=1;i<=12;i++) loadSprite('b'+String(i).padStart(2,'0'));
 loadSprite('hero','3');
 function loadImg(key,url){spritesTotal++;const im=new Image();
   im.onload=()=>{spritesLoaded++;if(spritesLoaded>=spritesTotal)onAssetsReady();};
@@ -321,9 +322,22 @@ const MTYPES={
   chainspectre:{s:'d20',hp:80,dmg:11,spd:95,r:19,xp:6,h:86,name:'Chained Spectre',b:'shooter',ba:{range:520,cd:2.0,burst:1,pdmg:9,pspeed:300,color:'#7fe0a0',sprite:'fx_p12'}},
   berserker:{s:'d23',hp:72,dmg:13,spd:130,r:19,xp:5,h:80,name:'Berserker',b:'charger',ba:{range:360,cd:2.6,wind:0.35,dur:0.4,speed:620}},
   brainhorror:{s:'d25',hp:110,dmg:12,spd:54,r:22,xp:7,h:74,name:'Brain Horror',b:'shooter',ba:{range:540,cd:2.2,burst:5,spread:0.6,pdmg:7,pspeed:230,color:'#ff8ab0',sprite:'fx_p03'}},
+  deathknight:{s:'b01',hp:2500,dmg:24,spd:74,r:46,xp:120,h:188,name:'Death Knight',boss:true,b:'boss',ba:{pcol:'rgba(220,40,50,1)',pfx:'fx_p01',summon:['zombie','goblin']}},
+  bloodlord:{s:'b02',hp:2400,dmg:23,spd:78,r:44,xp:120,h:190,name:'Blood Lord',boss:true,b:'boss',ba:{pcol:'rgba(210,30,70,1)',pfx:'fx_p03',summon:['wraith','zombie']}},
+  abomination:{s:'b03',hp:3200,dmg:24,spd:60,r:50,xp:140,h:188,name:'Abomination',boss:true,b:'boss',ba:{pcol:'rgba(160,200,80,1)',pfx:'fx_p14',summon:['slime','plaguebeast']}},
+  behemoth:{s:'b04',hp:3300,dmg:24,spd:58,r:52,xp:140,h:190,name:'Plague Behemoth',boss:true,b:'boss',ba:{pcol:'rgba(150,210,80,1)',pfx:'fx_p14',summon:['plaguebeast','slime']}},
+  broodmother:{s:'b05',hp:2300,dmg:22,spd:80,r:48,xp:120,h:170,name:'Broodmother',boss:true,b:'boss',ba:{pcol:'rgba(220,225,255,1)',pfx:'fx_p02',summon:['spider','spider']}},
+  forestlord:{s:'b06',hp:2700,dmg:23,spd:64,r:48,xp:130,h:198,name:'Forest Lord',boss:true,b:'boss',ba:{pcol:'rgba(150,230,90,1)',pfx:'fx_p14',summon:['dryad','plant']}},
+  magmalord:{s:'b07',hp:2800,dmg:25,spd:64,r:48,xp:130,h:190,name:'Magma Lord',boss:true,b:'boss',ba:{pcol:'rgba(255,120,40,1)',pfx:'fx_p01',summon:['fire','salamander']}},
+  crystaldemon:{s:'b08',hp:2600,dmg:24,spd:84,r:46,xp:130,h:192,name:'Crystal Demon',boss:true,b:'boss',ba:{pcol:'rgba(180,90,255,1)',pfx:'fx_p16',summon:['demon','beholder']}},
+  leviathan:{s:'b09',hp:2700,dmg:24,spd:66,r:50,xp:130,h:180,name:'Leviathan',boss:true,b:'boss',ba:{pcol:'rgba(90,215,205,1)',pfx:'fx_p08',summon:['octopus','octopus']}},
+  lichking:{s:'b10',hp:2500,dmg:22,spd:68,r:46,xp:130,h:196,name:'Lich King',boss:true,b:'boss',ba:{pcol:'rgba(120,240,180,1)',pfx:'fx_p12',summon:['zombie','wraith']}},
+  crystalgolem:{s:'b11',hp:3000,dmg:24,spd:58,r:50,xp:140,h:190,name:'Amethyst Golem',boss:true,b:'boss',ba:{pcol:'rgba(190,120,255,1)',pfx:'fx_p16',summon:['beholder','stone']}},
+  firedragon:{s:'b12',hp:2700,dmg:25,spd:74,r:50,xp:140,h:196,name:'Fire Dragon',boss:true,b:'boss',ba:{pcol:'rgba(255,90,40,1)',pfx:'fx_p01',summon:['wolf','harpy']}},
   dragon:{s:'n03',hp:2400,dmg:22,spd:72,r:46,xp:120,h:172,name:'Ancient Dragon',boss:true,b:'boss'},
 };
 const ELITE_POOL=['orc','zombie','owlbear','minotaur','wraith','beholder','demon','fire','stag','boar','mossbear','mossgolem','druid','dryad','cyclops','mawbeast','deathrider','plaguebeast','hydra','brainhorror','bonetreant','berserker'];
+const BOSSES=['deathknight','bloodlord','abomination','behemoth','broodmother','forestlord','magmalord','crystaldemon','leviathan','lichking','crystalgolem','firedragon'];
 const WAVES=[
   {t:0,pool:['wolf','goblin','lynx'],rate:1.0,cap:18},
   {t:40,pool:['wolf','goblin','spider','orc','lynx','stag'],rate:1.6,cap:26},
@@ -482,13 +496,14 @@ function beTeleporter(e,p,d,spd,dt){
   if(e.aCd<=0&&d>200){e.aCd=e.ba.cd||3;spawnBurst(e.x,e.y,'#9a7bd0',8);
     const a=Math.atan2(p.y-e.y,p.x-e.x),bl=Math.min(d-90,e.ba.dist||300);e.x+=Math.cos(a)*bl;e.y+=Math.sin(a)*bl;spawnBurst(e.x,e.y,'#9a7bd0',8);}}
 function beBoss(e,p,d,spd,dt){
+  const ba=e.ba||{},pcol=ba.pcol||'rgba(255,90,40,1)',pfx=ba.pfx||'fx_p01',summons=ba.summon||['wolf','harpy','goblin'];
   if(d>e.r+p.r+40)moveT(e,p.x,p.y,spd,dt);
   e.aCd-=dt;
-  if(e.aCd<=0){e.phase=(e.phase+1)%4;e.aCd=2.5;const base=Math.atan2(p.y-e.y,p.x-e.x);
-    if(e.phase===0){for(let i=0;i<12;i++)spawnEProj(e.x,e.y,i/12*Math.PI*2,260,16,'rgba(255,90,40,1)','fx_p01');sfx('boss');}
-    else if(e.phase===1){for(let i=-3;i<=3;i++)spawnEProj(e.x,e.y,base+i*0.12,330,14,'rgba(255,150,50,1)','fx_p01');}
-    else if(e.phase===2){for(let i=0;i<4;i++)spawnHazard(p.x+rand(-160,160),p.y+rand(-160,160),92,22,{warnT:0.9,life:0.35,color:'rgba(255,110,40,0.32)',ring:'rgba(255,130,40,0.9)'});addShake(6);}
-    else{if(G.enemies.length<80){const ks=['wolf','harpy','goblin'];for(let i=0;i<3;i++)spawnEnemy(ks[i],false,e.x,e.y);}}}}
+  if(e.aCd<=0){e.phase=(e.phase+1)%4;e.aCd=2.4;const base=Math.atan2(p.y-e.y,p.x-e.x);
+    if(e.phase===0){for(let i=0;i<12;i++)spawnEProj(e.x,e.y,i/12*Math.PI*2,260,16,pcol,pfx);sfx('boss');addShake(4);}
+    else if(e.phase===1){for(let i=-3;i<=3;i++)spawnEProj(e.x,e.y,base+i*0.12,330,14,pcol,pfx);}
+    else if(e.phase===2){for(let i=0;i<4;i++)spawnHazard(p.x+rand(-170,170),p.y+rand(-170,170),94,22,{warnT:0.9,life:0.35,color:'rgba(255,110,40,0.32)',ring:'rgba(255,130,40,0.9)'});addShake(6);}
+    else{if(G.enemies.length<80){for(let i=0;i<3;i++)spawnEnemy(summons[i%summons.length],false,e.x,e.y);}}}}
 function runBehavior(e,p,d,spd,dt){
   switch(e.b){
     case 'shooter':beShooter(e,p,d,spd,dt);break;
@@ -737,7 +752,7 @@ function update(dt){
   if(spawnAcc>3)spawnAcc=3;
   G.eliteT-=dt;if(G.eliteT<=0){G.eliteT=rand(18,26);spawnEnemy(ELITE_POOL[(Math.random()*ELITE_POOL.length)|0],true);banner('☠ ELITE!',1.0);}
   // Final boss appears once the clock runs out; victory is granted only on its defeat.
-  if(G.time>=G.dur&&!bossSpawned){bossSpawned=true;spawnEnemy('dragon');}
+  if(G.time>=G.dur&&!bossSpawned){bossSpawned=true;spawnEnemy(BOSSES[(Math.random()*BOSSES.length)|0]);}
 
   const cm=1+Math.min(G.combo,50)*0.04;
 
